@@ -1,0 +1,128 @@
+📝 Instrucciones para ejecutar el proyecto EDA – MLOps
+
+
+1. Descripción general
+
+Este proyecto realiza un Análisis Exploratorio de Datos (EDA) del dataset
+Student Entrance Performance (UCI), siguiendo una estructura modular basada en MLOps.
+
+
+El objetivo es:
+
+Analizar y limpiar los datos (versión modificada y original).
+
+Generar visualizaciones y reportes automáticos.
+
+Producir un reporte interactivo en formato HTML con insights automáticos.
+
+
+
+2. Estructura actual del proyecto
+
+mlops/
+│
+├── config.py            → Define rutas, parámetros y constantes globales.
+├── dataset.py           → Carga y guarda datasets (raw / interim).
+├── features.py          → Clasifica columnas, limpia y prepara datos.
+├── plots.py             → Crea figuras estáticas (PNG) con Seaborn.
+├── report_html.py       → Genera reporte interactivo (Plotly + HTML).
+run_eda.py          	  → Ejecuta el EDA tradicional (imágenes y CSV limpio).
+run_eda_html.py      	  → Ejecuta el EDA interactivo (reporte HTML final).
+
+
+
+
+3. Preparación del entorno
+
+Asegúrate de tener instalado Python 3.10 o superior.
+En tu terminal (o entorno de Google Colab / VS Code):
+
+pip install pandas numpy matplotlib seaborn plotly
+
+
+
+4. Ubicación de los datasets
+
+Coloca los archivos en esta ruta:
+
+data/raw/
+├── student_entry_performance_original.csv
+└── student_entry_performance_modified.csv
+
+
+Si solo tienes uno, el sistema usará el modificado como fuente principal.
+
+
+
+5. Ejecución del análisis
+🔹 A) Para generar figuras estáticas (PNG) y un dataset limpio:
+python run_eda.py
+
+
+Esto genera:
+
+Histogramas, boxplots y gráficos categóricos.
+
+Un archivo limpio en:
+
+data/interim/student_interim_clean.csv
+
+
+
+Figuras en: 
+
+reports/figures/
+
+🔹 B) Para generar el reporte HTML interactivo:
+python run_eda_html.py
+
+
+Esto produce un reporte con visualizaciones dinámicas y textos automáticos.
+
+Archivo de salida:
+
+reports/eda_html/eda_modified_plotly.html
+
+
+
+6. Contenido del reporte HTML
+
+Incluye:
+
+Información general (filas, columnas, nulos, duplicados).
+
+Distribución del target (Performance).
+
+Mapa de nulos y matriz de correlación.
+
+Gráficos de cardinalidad, numéricos y categóricos.
+
+Insights automáticos (textos que resumen los hallazgos).
+
+
+
+7. Notas importantes
+
+Antes de ejecutar cualquier script, instala las dependencias con:
+
+	"pip install -r requirements.txt"
+
+
+Esto garantizará que todos los paquetes necesarios estén disponibles (pandas, numpy, plotly, seaborn, etc.).
+
+
+No es necesario modificar el código de los archivos dentro de la carpeta /mlops/.
+
+
+Los únicos scripts que deben ejecutarse directamente son:
+
+run_eda.py → genera figuras y dataset limpio
+run_eda_html.py → genera reporte interactivo en HTML
+
+
+Si aparece un error por una librería faltante, instálala manualmente con:
+
+"pip install {{nombre_libreria}}"
+
+
+El reporte HTML final se abre directamente desde un navegador (Chrome, Edge, Firefox, etc.).
