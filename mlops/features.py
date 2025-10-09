@@ -1,6 +1,12 @@
 import pandas as pd
 from .config import TABLES
 
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.decomposition import PCA
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+
 # Asegura que exista la carpeta TABLES (almacenará tablas o artefactos derivados)
 TABLES.mkdir(parents=True, exist_ok=True)
 
@@ -125,3 +131,71 @@ def minimal_preprocess(df: pd.DataFrame):
         out[c] = out[c].fillna(out[c].mode().iloc[0])
 
     return out, num_cols, cat_cols
+
+
+# -----------------------------------------------------------------------------
+# PREPROCESAMIENTO AVANZADO (ESCALADO + ONE-HOT + PCA)
+# -----------------------------------------------------------------------------
+def preprocess_advanced(
+    df: pd.DataFrame,
+    num_cols: list[str],
+    cat_cols: list[str],
+    n_components: int = 3
+) -> pd.DataFrame:
+    """
+    Preprocesamiento para modelado:
+      - Escalado de numéricas (StandardScaler)
+      - Codificación One-Hot de categóricas (handle_unknown='ignore')
+      - PCA opcional (añade columnas PC1..PCk)
+
+    Reglas:
+      - Si no hay numéricas, no escala.
+      - Si no hay categóricas, no codifica.
+      - PCA solo si hay columnas suficientes tras combinar numéricas + One-Hot.
+    """
+    df_proc = df.copy()
+
+    # Escalado de numéricas
+    if len(num_cols) > 0:
+        scaler = StandardScaler()
+        df_proc[num_cols] = scaler.fit_transform(df_proc[num_cols])
+
+    # Codificación One-Hot (compatibilidad de versiones)
+    df_encoded = None
+    if len(cat_cols) > 0:
+        try:
+            encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        except TypeError:
+            encoder = OneHotEncoder(sparse=False, handle_unknown='ignore')
+        encoded = encoder.fit_transform(df_proc[cat_cols])
+        encoded_cols = encoder.get_feature_names_out(cat_cols)
+        df_encoded = pd.DataFrame(encoded, columns=encoded_cols, index=df_proc.index)
+
+    # Unir partes
+    parts = []
+    if len(num_cols) > 0:
+        parts.append(df_proc[num_cols])
+    if df_encoded is not None:
+        parts.append(df_encoded)
+
+    if not parts:
+        print("No se encontraron columnas numéricas ni categóricas para transformar.")
+        return df_proc
+
+    X = pd.concat(parts, axis=1)
+
+    # PCA (Opcional)
+    if n_components and n_components > 0:
+        max_components = min(n_components, X.shape[1])
+        if max_components >= 1:
+            pca = PCA(n_components=max_components, random_state=42)
+            components = pca.fit_transform(X)
+            pca_cols = [f"PC{i+1}" for i in range(max_components)]
+            df_pca = pd.DataFrame(components, columns=pca_cols, index=X.index)
+            print("Varianza explicada (PCA):", np.round(pca.explained_variance_ratio_, 3))
+            X = pd.concat([X, df_pca], axis=1)
+        else:
+            print("PCA omitido: menos columnas que componentes solicitados.")
+
+    print("Preprocesamiento avanzado finalizado.")
+    return X

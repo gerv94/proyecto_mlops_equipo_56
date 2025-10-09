@@ -35,52 +35,59 @@ def guess_target(df: pd.DataFrame):
 # -----------------------------------------------------------------------------
 def main():
     """
-    Punto de entrada principal del análisis exploratorio (EDA).
-
     Pasos:
-    1. Cargar dataset 'modificado' desde mlops/dataset.py.
-    2. Asegurar que las columnas tengan tipos de datos consistentes.
-    3. Detectar la variable objetivo automáticamente.
-    4. Generar gráficos básicos (target, nulos, numéricos, categóricos).
-    5. Normalizar y limpiar las variables categóricas.
-    6. Aplicar preprocesamiento mínimo e imputación.
-    7. Guardar el dataset intermedio limpio en data/interim/.
+    1. Cargar dataset modificado y tipificar columnas.
+    2. Normalizar texto en categóricas.
+    3. Visualizaciones básicas (target, nulos, numéricas, categóricas).
+    4. Imputación mínima (mediana/moda) y guardado limpio intermedio.
+    5. Preprocesamiento avanzado (escalado, One-Hot, PCA) y guardado para modelado.
     """
     # -------------------------------------------------------------------------
-    # (1) CARGA DE DATOS
+    # (1) CARGA Y TIPIFICADO
     # -------------------------------------------------------------------------
-    df = dataset.load_modified()         # lee student_entry_performance_modified.csv
-    df = dataset.basic_typing(df)        # fuerza detección de tipos numéricos y texto
+    df = dataset.load_modified()
+    df = dataset.basic_typing(df)
 
     # -------------------------------------------------------------------------
-    # (2) DETECCIÓN DEL TARGET
+    # (2) NORMALIZACIÓN DE TEXTO EN CATEGÓRICAS (ANTES DE GRAFICAR)
     # -------------------------------------------------------------------------
+    num_cols, cat_cols = features.split_num_cat(df)
+    df = features.clean_categoricals(df, cat_cols)
+
+    # -------------------------------------------------------------------------
+    # (3) VISUALIZACIONES BÁSICAS
+    # -------------------------------------------------------------------------
+    # Recalcular listas por si cambió algo tras la normalización
+    num_cols, cat_cols = features.split_num_cat(df)
+
     target = guess_target(df)
     print(f"[INFO] target: {target}")
 
-    # -------------------------------------------------------------------------
-    # (3) VISUALIZACIONES BÁSICAS (EDA RÁPIDO)
-    # -------------------------------------------------------------------------
-    # Distribución de la variable objetivo
-    plots.plot_target_distribution(df, target)
-    # Porcentaje de nulos por columna
+    if target is not None:
+        plots.plot_target_distribution(df, target)
     plots.plot_missingness(df)
-
-    # Histogramas / boxplots de numéricas y categóricas
-    num_cols, cat_cols = features.split_num_cat(df)
     plots.plot_numerics(df, num_cols)
     plots.plot_categoricals(df, cat_cols)
 
     # -------------------------------------------------------------------------
-    # (4) LIMPIEZA MÍNIMA Y GUARDADO INTERMEDIO
+    # (4) LIMPIEZA MÍNIMA (IMPUTACIÓN) Y GUARDADO LIMPIO
     # -------------------------------------------------------------------------
-    # Normalización de texto en categóricas (minusculas, espacios, etc.)
-    df_norm = features.clean_categoricals(df, cat_cols)
-    # Imputación de nulos: medianas y modas
-    df_clean, _, _ = features.minimal_preprocess(df_norm)
-    # Guarda versión limpia intermedia
-    out = dataset.save_interim(df_clean, "student_interim_clean.csv")
-    print(f"[OK] interim guardado en: {out}")
+    df_clean, _, _ = features.minimal_preprocess(df)
+    out_clean = dataset.save_interim(df_clean, "student_interim_clean.csv")
+    print(f"[OK] interim guardado en: {out_clean}")
+
+    # -------------------------------------------------------------------------
+    # (5) PREPROCESAMIENTO AVANZADO PARA MODELADO (NO PARA EL HTML)
+    # -------------------------------------------------------------------------
+    num_cols_clean, cat_cols_clean = features.split_num_cat(df_clean)
+    df_ready = features.preprocess_advanced(
+        df_clean,
+        num_cols=num_cols_clean,
+        cat_cols=cat_cols_clean,
+        n_components=3
+    )
+    out_ready = dataset.save_interim(df_ready, "student_interim_preprocessed.csv")
+    print(f"[OK] preprocessed guardado en: {out_ready}")
 
 
 # -----------------------------------------------------------------------------
