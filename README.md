@@ -38,7 +38,6 @@ mlops/
 data/
 ├── raw/ # Datasets originales
 ├── interim/ # Datasets limpios o intermedios
-└── processed/ # Datasets finales para modelado
 run_eda.py # Ejecución del EDA tradicional
 run_eda_html.py # Ejecución del EDA interactivo
 
