@@ -1,5 +1,0 @@
-Revisión inicial del entorno (SRE - Neri)
-- Repositorio clonado correctamente
-- Dependencias revisadas
-- Scripts listos para pruebas locales
-Fecha: 11/10/2025
