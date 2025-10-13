@@ -10,6 +10,7 @@ DATA_PROCESSED = ROOT / "data" / "processed"
 REPORTS        = ROOT / "reports"
 FIGURES        = REPORTS / "figures"
 TABLES         = REPORTS / "tables"
+CLASSIFICATION_REPORTS = REPORTS / "classification_reports"
 
 # Archivos
 MODIFIED_CSV = DATA_RAW / "student_entry_performance_modified.csv"
