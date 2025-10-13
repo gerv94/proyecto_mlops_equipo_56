@@ -252,7 +252,3 @@ artifacts/
 .env
 .envrc
 *.code-workspace
-
-# Archivos del SRE (diagnósticos o versiones)
-requirements_sre.txt
-DATA_VERSION_CONTROL.md
