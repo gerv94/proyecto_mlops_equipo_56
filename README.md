@@ -42,3 +42,11 @@ run_eda.py # Ejecución del EDA tradicional
 run_eda_html.py # Ejecución del EDA interactivo
 
 
+## Configuración del entorno congelada (versiones utilizadas confirmadas)
+Crear entorno virtual e instalar dependencias:
+
+```bash
+python -m venv venv
+source venv/bin/activate   # en Linux/macOS
+venv\Scripts\activate      # en Windows
+pip install -r requirements_sre.txt
