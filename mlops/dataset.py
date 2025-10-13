@@ -1,7 +1,7 @@
 from __future__ import annotations
 import pandas as pd
 from pathlib import Path
-from .config import (MODIFIED_CSV, ORIGINAL_CSV, DATA_INTERIM, DATA_PROCESSED,
+from .config import (MODIFIED_CSV, ORIGINAL_CSV, PREPROCESSED_CSV, DATA_INTERIM, DATA_PROCESSED,
                      TABLES)
 
 # Aseguramos que las carpetas necesarias para el flujo de datos existan
@@ -23,6 +23,15 @@ def load_modified() -> pd.DataFrame:
     """
     return pd.read_csv(MODIFIED_CSV)
 
+def load_preprocessed() -> pd.DataFrame:
+    """
+    Carga el dataset 'preprocesado' (preprocesado) desde la ruta
+    especificada en MODIFIED_CSV.
+    
+    Returns:
+        pd.DataFrame: DataFrame con el contenido del CSV preprocesado.
+    """
+    return pd.read_csv(PREPROCESSED_CSV)
 
 def load_original_if_exists() -> pd.DataFrame | None:
     """
