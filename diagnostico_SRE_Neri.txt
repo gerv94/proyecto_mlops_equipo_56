@@ -21,3 +21,5 @@
 
  Próximo paso:
 Configurar entorno virtual (venv) para aislamiento de dependencias y crear control de versión DVC.
+
+Validamos que se pueda modificar en Colab
