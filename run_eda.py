@@ -6,6 +6,8 @@ from mlops import dataset, features, plots
 # FUNCIONES AUXILIARES
 # -----------------------------------------------------------------------------
 
+#prueba uno git
+
 def guess_target(df: pd.DataFrame):
     """
     Intenta detectar automáticamente cuál columna del DataFrame
