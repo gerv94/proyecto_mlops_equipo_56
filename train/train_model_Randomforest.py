@@ -8,6 +8,8 @@ from sklearn.metrics import accuracy_score, classification_report
 import mlflow
 import mlflow.sklearn
 
+#Prueba 
+
 # --- Cargar datos ---
 df = pd.read_csv('data/raw/student_entry_performance_original.csv')
 
