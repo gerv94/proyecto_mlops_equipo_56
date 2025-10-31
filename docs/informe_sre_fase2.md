@@ -1,185 +1,171 @@
-# Informe Técnico – SRE (Fase 2 MLOps)
+# Informe Técnico – Rol SRE  
+## Fase 2: Implementación de un entorno reproducible con MLflow  
 **Proyecto:** Student Performance  
+**Equipo:** MLOps – Grupo 56  
 **Rol:** Site Reliability Engineer (SRE)  
-**Autor:** Neri [Equipo 56, MLOps – Fase 2]  
-**Fecha:** 30 de octubre de 2025
-
-## Resumen
-Este informe documenta el trabajo del rol SRE en la Fase 2 del proyecto *Student Performance*. Se presenta el diseño de un entorno reproducible (control de dependencias, versionamiento y estructura de proyecto), la gestión de experimentos con MLflow (parámetros, métricas, artefactos), la automatización del pipeline (scripts/Makefile) y un esquema inicial de monitoreo y logging. Se justifica cada decisión con buenas prácticas de MLOps (reproducibilidad, separación de entornos, control de riesgo de modelos y preparación para producción). El objetivo es habilitar que el modelo del equipo se ejecute de forma consistente desde Visual Studio Code, facilitando iteración, trazabilidad y posterior despliegue controlado.
-
-**Palabras clave:** SRE, MLOps, reproducibilidad, MLflow, automatización, monitoreo, Student Performance.
+**Autor:** Luis Felipe Neri Alvarado Fregoso
 
 ---
 
-## 1. Introducción y alcance del rol SRE
-El rol SRE en MLOps garantiza confiabilidad, reproducibilidad y operabilidad del ciclo de vida de ML: desde el entorno y las dependencias, pasando por el seguimiento de experimentos, hasta la automatización y observabilidad inicial. En la Fase 2, el foco no es un despliegue productivo definitivo, sino dejar listo el andamiaje técnico para ejecutar el modelo del equipo de manera consistente, auditable y repetible, y preparar el terreno para validación y futura integración continua.
+## 1. Objetivo del rol SRE en la Fase 2
 
-Objetivos de esta fase:
-- Estandarizar el entorno de ejecución y las dependencias.
-- Implementar tracking de experimentos (MLflow).
-- Automatizar ejecución de pipeline (entrenamiento, registro de artefactos).
-- Habilitar logging y evidencias mínimas de monitoreo local.
-- Documentar riesgos y controles (reproducibilidad, training–serving skew, data drift).
+El objetivo principal de esta fase fue garantizar la **reproducibilidad, trazabilidad y estabilidad** del ciclo de entrenamiento del modelo de Machine Learning, asegurando que los resultados puedan ser replicados en cualquier entorno, bajo las mismas condiciones y dependencias.
 
----
-
-## 2. Contexto del proyecto y dataset
-El proyecto *Student Performance* busca entrenar un modelo supervisado para predecir el rendimiento de estudiantes (métrica principal por confirmar con el equipo: por ejemplo *accuracy* o *F1*). La Fase 2 exige una versión inicial operativa del pipeline y evidencias de control de versiones y documentación técnica. Como SRE, se habilita un flujo reproducible que el resto de roles puede usar y auditar desde VS Code.
+El rol SRE se encargó de:
+- Estandarizar la estructura del repositorio para separar código, datos y reportes.  
+- Definir y controlar el entorno virtual (`.venv`).  
+- Implementar y registrar experimentos mediante **MLflow**.  
+- Generar evidencia de reproducibilidad a través de reportes y artefactos controlados por Git.  
 
 ---
 
-## 3. Entorno reproducible (VS Code)
+## 2. Configuración del entorno reproducible
 
-### 3.1 Estructura del proyecto
-Se adopta una estructura mínima, portable y clara:
+Se utilizó un entorno virtual basado en **Python 3.12.6**, dentro del cual se instalaron todas las dependencias exactas utilizadas para el entrenamiento y seguimiento del modelo.
 
-```
-student-performance/
-├─ data/                       # (no versionar datos sensibles)
-├─ notebooks/                  # exploración/E2E rápido (opcional)
-├─ src/
-│  ├─ train_model.py           # entrenamiento y registro MLflow
-│  ├─ utils_logging.py         # configuración de logging
-│  └─ __init__.py
-├─ models/                     # salidas (artefactos locales)
-├─ mlruns/                     # tracking MLflow local
-├─ requirements.txt            # dependencias fijadas
-├─ run_pipeline.sh             # pipeline reproducible (bash)
-├─ Makefile                    # alternativa cross-OS a run_pipeline.sh
-├─ README.md
-└─ .gitignore
-```
-
-### 3.2 Dependencias y fijado de versiones
-Para garantizar resultados repetibles, se fijan versiones en `requirements.txt`:
-
-```
-pandas==2.2.2
-numpy==1.26.4
-scikit-learn==1.5.0
-mlflow==2.13.1
-matplotlib==3.9.0
-joblib==1.3.2
-```
-
-La fijación evita derivas de entorno entre máquinas.
-
-### 3.3 Entorno virtual
-En **VS Code (Terminal integrado):**
-
-```
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# Linux/macOS:
-source .venv/bin/activate
-
-pip install --upgrade pip
+### 2.1 Requisitos técnicos
+```bash
+Python 3.12.6
 pip install -r requirements.txt
 ```
 
-Registrar versión de Python y hash del archivo de dependencias como evidencia de entornos equivalentes.
+### 2.2 Principales librerías instaladas
+| Librería | Versión | Propósito |
+|-----------|----------|-----------|
+| numpy | 2.3.4 | Operaciones numéricas vectorizadas |
+| pandas | 2.3.3 | Manipulación y limpieza de datos |
+| scikit-learn | 1.7.2 | Entrenamiento y evaluación de modelos |
+| matplotlib / seaborn / plotly | 3.10.7 / 0.13.2 / 6.3.1 | Visualización |
+| mlflow | 3.5.1 | Registro de experimentos y artefactos |
+| pyarrow | 21.0.0 | Lectura y escritura de datos en formato parquet |
+| Flask + waitress | 3.1.2 / 3.0.2 | Despliegue del MLflow UI local |
 
 ---
 
-## 4. Gestión de experimentos con MLflow
-Se activa **MLflow Tracking** local para:
-- Registrar parámetros (algoritmo, random_state, test_size, features).
-- Registrar métricas (accuracy, precision, recall, f1, AUC, según tarea).
-- Guardar artefactos (modelo `.pkl` o `.joblib`, matriz de confusión `.png`, reporte de clasificación).
-- Versionar cada run con etiquetas y commits asociados.
+## 3. Estructura del proyecto
 
-Buenas prácticas:
-- Definir un `experiment_name` por iteración.
-- Añadir tags: `role=SRE`, `phase=2`, `dataset=v1`.
-- Mantener `mlruns/` o documentar si se excluye del repositorio.
-
----
-
-## 5. Automatización del pipeline
-Se implementa un pipeline reproducible con script `run_pipeline.sh` y Makefile.
-
-### 5.1 Script `run_pipeline.sh`
-Ejemplo de automatización en bash:
-
-```
-#!/usr/bin/env bash
-set -e
-echo "[SRE] Activando entorno..."
-source .venv/bin/activate
-
-echo "[SRE] Entrenando y registrando en MLflow..."
-python -u src/train_model.py 2>&1 | tee logs_training.txt
-
-echo "[SRE] Pipeline finalizado OK."
-```
-
-### 5.2 Makefile
-Alternativa más portable:
-
-```
-init:
-	python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
-
-train:
-	source .venv/bin/activate && python -u src/train_model.py
-
-all: init train
+```bash
+PROYECTO_MLOPS_EQUIPO_56/
+│
+├── data/
+│   ├── raw/                # Datos originales
+│   ├── interim/            # Datos limpios/preprocesados
+│
+├── docs/
+│   └── informe_sre_fase2.md
+│
+├── models/                 # Modelos serializados (.joblib)
+├── reports/                # Reportes generados
+│   └── classification_report_rf_train_*.txt
+│
+├── train/
+│   ├── train_model_sre.py  # Script principal del pipeline
+│   ├── train_model.py
+│   └── train_multiple_models.py
+│
+├── requirements.txt
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-## 6. Monitoreo y logging
-Se configura el módulo `logging` en Python:
+## 4. Ejecución del pipeline
 
-```python
-import logging
-logging.basicConfig(
-    filename='training.log',
-    level=logging.INFO,
-    format='%(asctime)s:%(levelname)s:%(message)s'
-)
-logging.info("Entrenamiento iniciado correctamente")
+### 4.1 Entrenamiento del modelo
+El modelo se entrena y registra automáticamente con el siguiente comando:
+
+```bash
+python train/train_model_sre.py
 ```
 
-El registro de logs permite trazabilidad y detección temprana de fallos. En fases posteriores se ampliará con validaciones automáticas y monitoreo de drift.
+El script realiza las siguientes tareas:
+1. Carga los datasets preprocesados (`data/interim/`).
+2. Divide los datos en entrenamiento y prueba con `train_test_split()`.
+3. Entrena un modelo `RandomForestClassifier`.
+4. Calcula métricas de desempeño (`accuracy`, `precision`, `recall`, `f1`).
+5. Genera y guarda:
+   - Reporte de clasificación `.txt`
+   - Matriz de confusión `.png`
+   - Modelo serializado `.joblib`
+6. Registra todos los artefactos en **MLflow** bajo el experimento:
+   ```
+   student_performance_experiment_fase2
+   ```
 
 ---
 
-## 7. Control de versiones (Git)
-Buenas prácticas de versionamiento:
-- Rama principal `main` y rama de trabajo `sre/setup-phase2`.
-- `.gitignore` debe excluir: `.venv/`, `__pycache__/`, `*.pyc`, `mlruns/` (opcional), `data/` si contiene datos crudos.
+## 5. Registro y seguimiento con MLflow
 
-Cada commit debe describir cambios específicos de infraestructura, dependencias o scripts.
+El rastreo de experimentos se habilita ejecutando:
+```bash
+mlflow ui --host 127.0.0.1 --port 5001 --workers 1
+```
 
----
+Esto levanta una interfaz local donde se pueden visualizar:
+- Los *runs* del experimento.  
+- Parámetros y métricas asociados a cada ejecución.  
+- Artefactos generados (modelo, reportes y figuras).
 
-## 8. Riesgos y mitigaciones
-1. **Reproducibilidad:** mitigada con entornos virtuales, fijado de dependencias y MLflow.  
-2. **Training–Serving Skew:** separación clara de inputs y features, registro de transformaciones.  
-3. **Data Drift:** preparar scripts para comparar distribuciones entre datasets.  
-4. **Errores del pipeline:** control de fallos con `set -e`, logging estructurado y automatización progresiva.
-
----
-
-## 9. Evidencias esperadas
-- Archivo `requirements.txt` y captura de `pip list`.  
-- Ejecución exitosa de `run_pipeline.sh` o `make train`.  
-- Registro en MLflow con parámetros y métricas.  
-- Artefactos guardados en `models/`.  
-- Historial de commits documentando cada avance.
+### Ejemplo de métricas registradas
+| Métrica | Valor |
+|----------|--------|
+| Accuracy | 0.9926 |
+| Precision (weighted) | 0.99 |
+| Recall (weighted) | 0.99 |
+| F1-score (weighted) | 0.99 |
 
 ---
 
-## 10. Conclusiones
-La contribución SRE en la Fase 2 deja un entorno reproducible, un pipeline automatizado y tracking de experimentos que habilitan al equipo a iterar de forma confiable desde VS Code y presentar evidencias de ingeniería MLOps. Con ello, se reduce el riesgo operativo, se facilita la auditoría de resultados y se prepara el terreno para validación avanzada, monitoreo de drift y CI/CD en fases siguientes.
+## 6. Control de versiones
+
+El proyecto se mantuvo bajo control de versiones Git, con un `.gitignore` configurado para excluir entornos virtuales, artefactos y datos temporales, permitiendo que el repositorio contenga únicamente el código fuente, documentación y evidencias necesarias.
+
+### Estructura de commits principales
+```bash
+SRE: added reproducible environment setup and technical report (Fase 2)
+SRE: finalized reproducible requirements for MLflow environment
+SRE: integración completa Fase 2 (entorno reproducible, MLflow tracking, requirements y documentación)
+```
 
 ---
 
-## Referencias
+## 7. Verificación de reproducibilidad
 
-- Breck, E., Polyzotis, N., Zinkevich, M., et al. (2020). *Machine Learning Design Patterns*. O’Reilly Media.  
-- Kleppmann, M. (2017). *Designing Data-Intensive Applications*. O’Reilly Media.  
-- Kazil, J., & Jaworski, K. (2016). *Data Wrangling with Python*. O’Reilly Media.  
-- Bruce, P., Bruce, A., & Gedeck, P. (2020). *Practical Statistics for Data Scientists (2nd ed.)*. O’Reilly Media.  
-- Treveil, M., et al. (2020). *Introducing MLOps*. O’Reilly Media.
+Se realizó una prueba de ejecución en un entorno limpio (`test_env`) siguiendo el proceso:
+
+```bash
+git clone https://github.com/<usuario>/proyecto_mlops_equipo_56.git
+cd proyecto_mlops_equipo_56
+py -3.12 -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python train/train_model_sre.py
+```
+
+Resultado:
+```
+Entrenamiento completado. Accuracy: 0.9926
+```
+
+Con esto se validó que el pipeline puede ejecutarse exitosamente en cualquier entorno a partir de `requirements.txt`, garantizando **reproducibilidad total**.
+
+---
+
+## 8. Conclusiones
+
+El rol SRE cumplió su propósito al:
+- Estandarizar la estructura del repositorio y sus componentes.
+- Garantizar la reproducibilidad total del entorno.  
+- Integrar el seguimiento de experimentos mediante MLflow.  
+- Implementar buenas prácticas de control de versiones y documentación.
+
+El pipeline resultante permite replicar entrenamientos, registrar métricas, y almacenar artefactos de manera controlada, sentando las bases para una fase posterior de **orquestación y despliegue (Fase 3)**.
+
+---
+
+## 9. Referencias
+
+- Treveil, A., et al. *Introducing MLOps: How to Scale Machine Learning in the Enterprise*. O’Reilly, 2020.  
+- Google Cloud. *Machine Learning Design Patterns*. O’Reilly, 2021.  
+- Lauchande, R. *ML Engineering with MLflow*. O’Reilly, 2023.
