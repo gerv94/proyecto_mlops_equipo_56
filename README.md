@@ -78,21 +78,64 @@ Desde la interfaz se pueden consultar:
 
 ---
 
-## 5. Reproducibilidad y control de versiones
+## 5. Pipeline de procesamiento y entrenamiento (DVC)
+
+El flujo de datos y entrenamiento fue definido mediante **DVC (Data Version Control)**, garantizando la reproducibilidad completa del proyecto.  
+Cada *stage* define sus dependencias (`-d`) y salidas (`-o`), de modo que cualquier cambio en los archivos fuente desencadena la ejecución del pipeline completo o parcial.
+
+### Estructura del pipeline
+
+```bash
+dvc.yaml
+├── stages:
+│   ├── preprocessing:
+│   │   deps:
+│   │     - mlops/dataset.py
+│   │     - mlops/features.py
+│   │     - run_eda.py
+│   │   outs:
+│   │     - data/interim/student_interim_clean.csv
+│   │     - data/interim/student_interim_preprocessed.csv
+│   │   cmd: python run_eda.py
+│   │
+│   └── training:
+│       deps:
+│         - data/interim/student_interim_preprocessed.csv
+│         - data/interim/student_interim_clean.csv
+│       outs:
+│         - models/model_latest.joblib
+│         - reports/classification_report_latest.txt
+│       cmd: python train/train_model_sre.py
+```
+
+### Ejecución del pipeline
+
+```bash
+# Ejecuta todas las etapas necesarias
+dvc repro
+
+# Verifica el estado del pipeline
+dvc status
+
+# Visualiza el flujo de dependencias
+dvc dag
+```
+
+### Resultados esperados
+
+- **Etapa preprocessing:** genera los datos limpios y preprocesados en `data/interim/`.  
+- **Etapa training:** entrena el modelo, genera métricas y guarda artefactos en `models/` y `reports/`.  
+- **DVC + Git:** registran automáticamente los cambios en código, datos y salidas.
+
+---
+
+## 6. Reproducibilidad y control de versiones
 
 El entorno reproducible se define mediante:
 
 ```bash
 Python 3.12.6
 pip install -r requirements.txt
-```
-
-El proyecto utiliza **DVC** para el versionado de datos y artefactos de entrenamiento:
-
-```bash
-dvc add data/interim/student_interim_preprocessed.csv
-dvc push
-dvc repro
 ```
 
 Cada ejecución de `dvc repro` garantiza la regeneración exacta del pipeline y los resultados, asegurando reproducibilidad total.
@@ -105,7 +148,7 @@ Cada ejecución de `dvc repro` garantiza la regeneración exacta del pipeline y 
 
 ---
 
-## 6. Estructura actual del proyecto
+## 7. Estructura actual del proyecto
 
 ```bash
 proyecto_mlops_equipo_56/
@@ -137,7 +180,7 @@ proyecto_mlops_equipo_56/
 
 ---
 
-## 7. Tecnologías y librerías clave
+## 8. Tecnologías y librerías clave
 
 | Categoría | Herramientas |
 |------------|--------------|
@@ -150,7 +193,7 @@ proyecto_mlops_equipo_56/
 
 ---
 
-## 8. Control de versiones y convenciones de commits
+## 9. Control de versiones y convenciones de commits
 
 El versionado de código se gestiona en GitHub bajo el repositorio:
 
@@ -170,7 +213,7 @@ PIPELINE: integración DVC y MLflow
 
 ---
 
-## 9. Documentación técnica (SRE)
+## 10. Documentación técnica (SRE)
 
 El documento principal de la Fase 2 se encuentra en:
 
@@ -187,7 +230,7 @@ Incluye:
 
 ---
 
-## 10. Próximos pasos – Fase 3
+## 11. Próximos pasos – Fase 3
 
 - Integrar orquestación con **DVC pipelines** o **MLflow Projects**.  
 - Implementar despliegue del modelo como API (FastAPI / Docker).  
