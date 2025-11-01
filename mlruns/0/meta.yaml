@@ -1,7 +1,6 @@
-artifact_location: file:C:/Users/Anuar/Nextcloud1/Documents/Maestria Inteligencia
-  artificial/Operaciones ML/proyecto_mlops_equipo_56/mlruns/0
-creation_time: 1760278959278
+artifact_location: file:C:/Users/felip/OneDrive/Documentos/GitHub/proyecto_mlops_equipo_56/mlruns/0
+creation_time: 1761994011672
 experiment_id: '0'
-last_update_time: 1760278959278
+last_update_time: 1761994011672
 lifecycle_stage: active
 name: Default
