@@ -1,0 +1,46 @@
+schema: '2.0'
+stages:
+  preprocessing:
+    cmd: python run_eda.py
+    deps:
+    - path: mlops/dataset.py
+      hash: md5
+      md5: 697257c3a9a317942420657ed5cbf382
+      size: 4425
+    - path: mlops/features.py
+      hash: md5
+      md5: 6a14c7d9ef6b6598347e71d2fb670126
+      size: 7462
+    - path: run_eda.py
+      hash: md5
+      md5: 527d6e09c0a04daf9852ad41d0c0881d
+      size: 4248
+    outs:
+    - path: data/interim/student_interim_clean.csv
+      hash: md5
+      md5: 76db7197326a5942db9c5b100349f69b
+      size: 58246
+    - path: data/interim/student_interim_preprocessed.csv
+      hash: md5
+      md5: 5acf3bd4244f461b6f562c2bf74bd614
+      size: 1263234
+  training:
+    cmd: python train/train_model_sre.py
+    deps:
+    - path: data/interim/student_interim_clean.csv
+      hash: md5
+      md5: 76db7197326a5942db9c5b100349f69b
+      size: 58246
+    - path: data/interim/student_interim_preprocessed.csv
+      hash: md5
+      md5: 5acf3bd4244f461b6f562c2bf74bd614
+      size: 1263234
+    outs:
+    - path: models/model_latest.joblib
+      hash: md5
+      md5: a74883951541e00d59bbc1ca2118a978
+      size: 1156161
+    - path: reports/classification_report_latest.txt
+      hash: md5
+      md5: c4d444768b867eac96d4f6e0c9954d8d
+      size: 499
