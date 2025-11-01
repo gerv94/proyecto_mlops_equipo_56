@@ -167,7 +167,3 @@ Este documento describe:
 - Monitorear métricas en tiempo real.
 
 ---
-
-## Autores
-**Equipo 56 – MLOps**  
-**Rol SRE:** Neri Felipe  
