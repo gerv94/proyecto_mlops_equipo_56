@@ -1,0 +1,5 @@
+outs:
+- md5: 76db7197326a5942db9c5b100349f69b
+  size: 58246
+  hash: md5
+  path: student_interim_clean.csv

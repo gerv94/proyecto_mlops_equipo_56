@@ -47,8 +47,6 @@ checkpoints/
 
 # Evitar subir datos reales
 data/raw/
-data/interim/
-data/processed/
 !data/README.md  # Solo mantener referencia vacía o documentación
 
 # =====================================================
@@ -81,3 +79,11 @@ data/processed/
 *.tmp
 *.swp
 *.old
+
+# ================================
+# DVC exceptions (allow metadata)
+# ================================
+!*.dvc
+!.dvc/
+!dvc.yaml
+!dvc.lock
