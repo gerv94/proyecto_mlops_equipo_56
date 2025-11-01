@@ -1,39 +1,63 @@
-# =====================================================
+# ============================================================
 # PROYECTO MLOPS – FASE 2 (SRE)
-# Entorno reproducible validado en Python 3.12 (Windows)
-# =====================================================
+# Entorno reproducible validado con Python 3.12.6 (Linux/Windows)
+# ============================================================
 
-# Core scientific stack
-numpy==2.3.4
-pandas==2.3.3
-scipy==1.16.3
+# ------------------------
+# CORE SCIENTIFIC STACK
+# ------------------------
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.13.1
 
-# Machine Learning
-scikit-learn==1.7.2
-joblib==1.5.2
+# ------------------------
+# MACHINE LEARNING
+# ------------------------
+scikit-learn==1.5.2
+joblib==1.4.2
 threadpoolctl==3.6.0
 
-# Visualization
-matplotlib==3.10.7
+# ------------------------
+# VISUALIZATION
+# ------------------------
+matplotlib==3.9.2
 seaborn==0.13.2
-plotly==6.3.1
+plotly==6.3.1  # opcional: para dashboards o notebooks interactivos
 
-# Experiment tracking / MLOps
-mlflow==3.5.1
+# ------------------------
+# MLOPS / EXPERIMENT TRACKING
+# ------------------------
+mlflow==2.15.1
+cloudpickle==2.2.1
+pyarrow==15.0.2
+dvc[all]==3.54.0
 
-# Data serialization / storage
-pyarrow==21.0.0
-
-# Utilities and environment
+# ------------------------
+# UTILITIES & ENVIRONMENT
+# ------------------------
+python-dotenv==1.0.1
+PyYAML==6.0.2
+packaging==24.2
 python-dateutil==2.9.0.post0
-pytz==2025.2
+pytz==2024.2
 tzdata==2025.2
-packaging==25.0
-PyYAML==6.0.3
-python-dotenv==1.2.1
 
-# Optional: only if running MLflow UI locally
+# ------------------------
+# FLASK (para UI local de MLflow si se requiere)
+# ------------------------
 Flask==3.1.2
 waitress==3.0.2
 SQLAlchemy==2.0.44
 alembic==1.17.1
+
+# ------------------------
+# INFRASTRUCTURE / SYSTEM
+# ------------------------
+setuptools==70.3.0
+wheel==0.44.0
+
+# ------------------------
+# DEBUGGING / LOGGING (opcional)
+# ------------------------
+rich==13.9.2      # para logs enriquecidos
+psutil==6.1.0     # para monitoreo de recursos

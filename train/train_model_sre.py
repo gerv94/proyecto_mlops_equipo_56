@@ -1,11 +1,11 @@
 # ============================================================
-# Entrenamiento reproducible y trazable - Fase 2 (SRE) - MLflow 3.x
+# Entrenamiento reproducible y trazable - Fase 2 (SRE) - MLflow
+# Compatible con MLflow 2.15.1 y 3.x
 # ============================================================
 
 import os
 import logging
 from datetime import datetime
-
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -24,7 +24,6 @@ import seaborn as sns
 # ============================================================
 # 1. CONFIGURACIÓN GENERAL
 # ============================================================
-
 os.makedirs("models", exist_ok=True)
 os.makedirs("reports", exist_ok=True)
 
@@ -42,7 +41,6 @@ logging.info(f"Semilla global fijada: {SEED}")
 # ============================================================
 # 2. CONFIGURACIÓN DE MLFLOW
 # ============================================================
-
 mlflow.set_tracking_uri("file:./mlruns")
 mlflow.set_experiment("student_performance_experiment_fase2")
 logging.info("Tracking MLflow configurado correctamente (Fase 2).")
@@ -50,7 +48,6 @@ logging.info("Tracking MLflow configurado correctamente (Fase 2).")
 # ============================================================
 # 3. CARGA DE DATOS
 # ============================================================
-
 try:
     X = pd.read_csv("data/interim/student_interim_preprocessed.csv")
     y = pd.read_csv("data/interim/student_interim_clean.csv")["Performance"]
@@ -62,7 +59,6 @@ except Exception as e:
 # ============================================================
 # 4. DIVISIÓN TRAIN / TEST
 # ============================================================
-
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=SEED, stratify=y
 )
@@ -71,24 +67,27 @@ logging.info(f"Split hecho. Train: {X_train.shape}, Test: {X_test.shape}")
 # ============================================================
 # 5. ENTRENAMIENTO Y TRACKING MLFLOW
 # ============================================================
-
 params = {
     "random_state": SEED,
     "n_estimators": 150,
     "max_depth": 8,
     "criterion": "gini"
 }
-
 run_name = f"rf_train_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
 with mlflow.start_run(run_name=run_name):
     try:
+        # ------------------------------------------------------------
+        # ENTRENAMIENTO
+        # ------------------------------------------------------------
         model = RandomForestClassifier(**params)
         model.fit(X_train, y_train)
         logging.info("Modelo RandomForest entrenado.")
 
+        # ------------------------------------------------------------
+        # PREDICCIÓN Y MÉTRICAS
+        # ------------------------------------------------------------
         y_pred = model.predict(X_test)
-
-        # Métricas con zero_division=0 para evitar warnings cuando hay clases sin predicciones
         metrics = {
             "accuracy": accuracy_score(y_test, y_pred),
             "precision_weighted": precision_score(y_test, y_pred, average="weighted", zero_division=0),
@@ -96,19 +95,22 @@ with mlflow.start_run(run_name=run_name):
             "f1_weighted": f1_score(y_test, y_pred, average="weighted", zero_division=0)
         }
 
-        # Reporte por clase (útil para ver qué clase no se predijo)
         classif_rep = classification_report(y_test, y_pred, zero_division=0)
         report_path = f"reports/classification_report_{run_name}.txt"
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(classif_rep)
 
-        # Log de parámetros y métricas
+        # ------------------------------------------------------------
+        # LOG DE PARÁMETROS, MÉTRICAS Y ARTEFACTOS
+        # ------------------------------------------------------------
         mlflow.log_params(params)
         mlflow.log_metrics(metrics)
         mlflow.log_artifact(report_path)
         logging.info(f"Métricas: {metrics}")
 
-        # Matriz de confusión
+        # ------------------------------------------------------------
+        # MATRIZ DE CONFUSIÓN
+        # ------------------------------------------------------------
         cm = confusion_matrix(y_test, y_pred)
         plt.figure(figsize=(6, 4))
         sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
@@ -121,22 +123,38 @@ with mlflow.start_run(run_name=run_name):
         mlflow.log_artifact(cm_path)
         logging.info(f"Matriz de confusión guardada en {cm_path}")
 
-        # Guardar modelo como artefacto (joblib)
+        # ------------------------------------------------------------
+        # GUARDAR MODELO LOCAL (joblib)
+        # ------------------------------------------------------------
         model_path = f"models/model_{run_name}.joblib"
         joblib.dump(model, model_path)
         mlflow.log_artifact(model_path)
         logging.info(f"Modelo guardado en {model_path}")
 
-        # Firma del modelo e input_example (MLflow 3.x)
-        # name= sustituye a artifact_path=
+        # ------------------------------------------------------------
+        # REGISTRO DE MODELO EN MLFLOW (COMPATIBLE 2.x Y 3.x)
+        # ------------------------------------------------------------
         signature = infer_signature(X_train, model.predict(X_train))
         input_example = X_test.head(5)
-        mlflow.sklearn.log_model(
-            sk_model=model,
-            name="model",
-            signature=signature,
-            input_example=input_example
-        )
+
+        mlflow_version = tuple(map(int, mlflow.__version__.split(".")[:2]))
+
+        if mlflow_version >= (3, 0):
+            # MLflow 3.x
+            mlflow.sklearn.log_model(
+                sk_model=model,
+                name="student_model",
+                signature=signature,
+                input_example=input_example
+            )
+        else:
+            # MLflow 2.x
+            mlflow.sklearn.log_model(
+                sk_model=model,
+                artifact_path="student_model",
+                signature=signature,
+                input_example=input_example
+            )
 
         print(f"Entrenamiento completado. Accuracy: {metrics['accuracy']:.4f}")
 
