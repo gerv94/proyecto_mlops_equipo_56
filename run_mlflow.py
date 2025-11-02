@@ -31,7 +31,7 @@ else:
 cmd = [
     venv_python, "-m", "mlflow", "ui",
     "--backend-store-uri", "file:./mlruns",
-    "--port", "5000"
+    "--port", "5001"
 ]
 
 # ---------------------------------------------------------------
@@ -41,7 +41,7 @@ cmd = [
 # la cierre manualmente (Ctrl+C). Esto garantiza trazabilidad.
 # ---------------------------------------------------------------
 print("===============================================================")
-print("  Iniciando MLflow UI en http://127.0.0.1:5000")
+print("  Iniciando MLflow UI en http://127.0.0.1:5001")
 print("  Presiona Ctrl+C para detener el servidor.")
 print("===============================================================")
 subprocess.run(cmd)
