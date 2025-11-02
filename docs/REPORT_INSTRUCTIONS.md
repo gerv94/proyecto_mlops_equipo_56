@@ -112,8 +112,13 @@ python run_reports.py
 # Solo reportes EDA
 python run_reports.py --type eda
 
-# Solo reporte de modelos
+# Solo reporte de modelos (local)
 python run_reports.py --type models
+
+# Reporte de modelos desde servidor MLflow remoto
+python run_reports.py --type models \
+  --mlflow-tracking-uri http://servidor:5000 \
+  --experiment nombre_experimento
 
 # Ver ayuda
 python run_reports.py --help
@@ -265,9 +270,30 @@ python run_eda.py
 
 ### Error: "No experiments found in MLflow"
 
+**Para modelos locales:**
 Entrena modelos primero:
 ```bash
 python train/train_multiple_models.py
+```
+
+**Para servidor MLflow remoto:**
+Si los experimentos están en un servidor remoto, especifica la URI:
+```bash
+python run_reports.py --type models \
+  --mlflow-tracking-uri http://servidor:puerto \
+  --experiment nombre_del_experimento
+```
+
+O configura la variable de entorno:
+```bash
+# Windows
+set MLFLOW_TRACKING_URI=http://servidor:puerto
+
+# Linux/macOS
+export MLFLOW_TRACKING_URI=http://servidor:puerto
+
+# Luego ejecuta
+python run_reports.py --type models
 ```
 
 ---
