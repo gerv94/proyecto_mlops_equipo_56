@@ -72,7 +72,7 @@ scipy 1.16.2
   - Target detectado automáticamente (heurística): `Performance`
 
 ### 3.2 Construcción de reportes HTML
-- **`run_eda_html.py`** con opciones:
+- **`run_reports.py`** (reemplazo de run_eda_html.py) con opciones:
   - `--which base` → usa `mlops/report_html.py`
   - `--which clean` → usa `mlops/report_html_clean.py` (aplica limpieza/normalización antes del EDA)
   - `--which pre` → usa `mlops/report_html_preprocessed.py` (solo CSV preprocesado)
@@ -129,12 +129,12 @@ pip install -r requirements.txt
 python run_eda.py
 
 # 4) Reportes HTML
-#   a) Base + Clean + Preprocesado
-python run_eda_html.py --which all
-#   b) Ejecutar por separado
-python run_eda_html.py --which base
-python run_eda_html.py --which clean
-python run_eda_html.py --which pre
+#   a) Todos los reportes (EDA + Models)
+python run_reports.py
+#   b) Solo reportes EDA
+python run_reports.py --type eda
+#   c) Solo reporte de modelos
+python run_reports.py --type models
 ```
 
 ---
@@ -163,7 +163,7 @@ python run_eda_html.py --which pre
 ## 8) Checklist de reproducibilidad
 
 - [x] Estructura de carpetas creada automáticamente (`mlops/config.py`).  
-- [x] Scripts orquestadores (`run_eda.py`, `run_eda_html.py`) listos para ejecutar.  
+- [x] Scripts orquestadores (`run_eda.py`, `run_reports.py`) listos para ejecutar.  
 - [x] Entorno aislado (`.venv`) + `requirements.txt`.  
 - [x] Artefactos y reportes generados con rutas deterministas.  
 - [x] Este documento de control de versiones de datos.

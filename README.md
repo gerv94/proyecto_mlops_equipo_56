@@ -32,10 +32,60 @@ Este proceso puede ejecutarse de dos formas:
 
 ```bash
 python run_eda.py          # EDA clásico con gráficos estáticos
-python run_eda_html.py     # EDA interactivo (Plotly)
+python run_reports.py      # Reportes HTML interactivos (Plotly)
 ```
 
-Los resultados se exportan a `reports/eda.html` y `reports/figures/`.
+Los resultados se exportan a `reports/eda_html/` y `reports/experiments_html/`.
+
+### 2.1 Reportes HTML Interactivos
+
+El script **`run_reports.py`** es un generador unificado de reportes que permite elegir qué tipo de reporte generar:
+
+#### Opciones disponibles:
+
+```bash
+# Generar TODOS los reportes (default)
+python run_reports.py
+
+# Solo reportes EDA (exploración de datos)
+python run_reports.py --type eda
+
+# Solo reporte de modelos (comparación)
+python run_reports.py --type models
+
+# Todos los reportes (explícito)
+python run_reports.py --type all
+
+# Personalizar experimento MLflow para reporte de modelos
+python run_reports.py --type models --experiment mi_experimento
+```
+
+#### Tipos de reportes generados:
+
+**EDA Reports:**
+- `base`: Dataset original vs modificado
+- `clean`: Datos limpios y normalizados
+- `preprocessed`: Datos preprocesados para modelado
+
+**Models Report:**
+- Comparación visual de modelos entrenados
+- Gráficos interactivos (barras, radar)
+- Ranking automático por rendimiento
+- Se actualiza automáticamente con cada nuevo entrenamiento
+- Visible en: `reports/experiments_html/models_comparison_report.html`
+
+#### Ejemplo de flujo completo:
+
+```bash
+# 1. Entrenar modelos
+python train/train_multiple_models.py
+
+# 2. Generar reportes
+python run_reports.py --type models
+
+# 3. Ver en navegador
+# Abre: reports/experiments_html/models_comparison_report.html
+```
 
 ---
 
@@ -173,7 +223,10 @@ proyecto_mlops_equipo_56/
 │   ├── interim/            # Datos limpios y preprocesados
 │
 ├── docs/
-│   └── informe_sre_fase2.md
+│   ├── informe_sre_fase2.md
+│   ├── model_comparison_report.md
+│   ├── architecture_diagram.md
+│   └── DATA_VERSION_CONTROL.md
 │
 ├── models/                 # Modelos serializados (.joblib)
 ├── reports/                # Reportes, métricas y figuras
@@ -228,20 +281,50 @@ PIPELINE: integración DVC y MLflow
 
 ---
 
-## 10. Documentación técnica (SRE)
+## 10. Documentación técnica
 
-El documento principal de la Fase 2 se encuentra en:
+El proyecto cuenta con documentación técnica comprehensiva en `/docs/`:
 
+### 10.1 Informe SRE
 ```
 /docs/informe_sre_fase2.md
 ```
-
 Incluye:
 - Configuración del entorno reproducible.  
 - Integración y validación del pipeline DVC.  
 - Registro y trazabilidad de experimentos en MLflow.  
 - Resultados y métricas de desempeño del modelo.  
 - Conclusiones del Ingeniero de Confiabilidad (SRE).
+
+### 10.2 Reporte de Comparación de Modelos
+```
+/docs/model_comparison_report.md
+```
+Incluye:
+- Evaluación de 8 algoritmos distintos (Logistic Regression, Random Forest, XGBoost, SVM, KNN, Decision Tree, Naive Bayes, Gradient Boosting).
+- Análisis de trade-offs (complejidad, precisión, interpretabilidad).
+- Justificación de la selección del mejor modelo.
+- Conclusiones y lecciones aprendidas del Data Scientist.
+
+### 10.3 Diagrama de Arquitectura
+```
+/docs/architecture_diagram.md
+```
+Incluye:
+- Visualización del pipeline completo (data flow).
+- Flujo de trabajo por fases.
+- Herramientas y versionado multi-capa.
+- Responsabilidades por rol del equipo.
+- Decisiones de arquitectura y mejoras futuras.
+
+### 10.4 Control de Versión de Datos
+```
+/docs/DATA_VERSION_CONTROL.md
+```
+Incluye:
+- Trazabilidad de transformaciones de datos.
+- Versionado de datasets con DVC.
+- Ejecuciones y resultados del pipeline.
 
 ---
 
