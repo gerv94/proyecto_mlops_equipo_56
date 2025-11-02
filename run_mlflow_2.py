@@ -12,7 +12,7 @@ import os
 # ---------------------------------------------------------------
 
 # Define el prefijo de la ruta para retroceder un nivel
-VENV_PREFIX = os.path.join("..", ".venv")
+VENV_PREFIX = os.path.join(".venv")
 
 # En Windows, los binarios están en ".venv/Scripts/"
 if os.name == "nt":
@@ -28,7 +28,7 @@ venv_python = os.path.abspath(venv_python_relative)
 # ---------------------------------------------------------------
 # 2. Comando de ejecución de MLflow
 # ---------------------------------------------------------------
-cmd = [venv_python, "-m", "mlflow", "ui","--backend-store-uri", "file:../mlruns","--port", "5001"] # El backend sigue siendo relativo a la raíz
+cmd = [venv_python, "-m", "mlflow", "ui","--backend-store-uri", "file:./mlruns","--port", "5001"] # El backend sigue siendo relativo a la raíz
 
 # ---------------------------------------------------------------
 # 3. Ejecución del proceso
