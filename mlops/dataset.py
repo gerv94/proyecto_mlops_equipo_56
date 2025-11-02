@@ -122,3 +122,7 @@ def save_processed(df: pd.DataFrame, name: str = "student_processed.csv") -> Pat
     p = DATA_PROCESSED / name
     df.to_csv(p, index=False)
     return p
+def load_interim(name: str) -> pd.DataFrame:
+    """Carga un CSV desde data/interim/ por nombre de archivo."""
+    p = DATA_INTERIM / name
+    return pd.read_csv(p)
