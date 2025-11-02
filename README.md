@@ -15,10 +15,13 @@ El objetivo es analizar y modelar el dataset *Student Performance on an Entrance
 
 ## 1. Manipulación y preparación de datos
 
-La etapa de preparación utiliza **Pandas** y **Scikit-learn** para limpiar, transformar y normalizar los datos.  
-Se eliminan valores nulos, duplicados y atípicos, garantizando la consistencia de las variables numéricas y categóricas.  
+La etapa de preparación de datos se realiza ahora como preprocesamiento productivo real separado del EDA.
+Este proceso se encuentra implementado en **mlops/preprocess.py** y es ejecutado automáticamente por el pipeline de DVC mediante **mlops/run_preprocess.py**.
 
-Los datasets intermedios se almacenan en `data/interim/`, mientras que los datos finales preprocesados se utilizan en el entrenamiento del modelo.
+Aquí se tipifican columnas, se normalizan categóricas, se imputan valores faltantes y se aplica preprocesamiento avanzado (escalado, One-Hot Encoding y PCA).
+Este flujo es el que alimenta directamente la fase de entrenamiento y asegura reproducibilidad en cualquier entorno.
+
+Los datasets intermedios generados por este preprocesamiento se guardan automáticamente en data/interim/ y son consumidos después por el proceso de entrenamiento del modelo.
 
 ---
 
@@ -92,11 +95,13 @@ dvc.yaml
 │   │   deps:
 │   │     - mlops/dataset.py
 │   │     - mlops/features.py
-│   │     - run_eda.py
+│   │     - mlops/preprocess.py
+│   │     - mlops/run_preprocess.py
+│   │     - data/raw/
 │   │   outs:
 │   │     - data/interim/student_interim_clean.csv
 │   │     - data/interim/student_interim_preprocessed.csv
-│   │   cmd: python run_eda.py
+│   │   cmd: python -m mlops.run_preprocess
 │   │
 │   └── training:
 │       deps:
@@ -106,6 +111,7 @@ dvc.yaml
 │         - models/model_latest.joblib
 │         - reports/classification_report_latest.txt
 │       cmd: python train/train_model_sre.py
+
 ```
 
 ### Ejecución del pipeline
@@ -137,6 +143,15 @@ El entorno reproducible se define mediante:
 Python 3.12.6
 pip install -r requirements.txt
 ```
+
+# Ejecuta el pipeline completo (preprocessing + training)
+dvc repro
+
+# O si quieres entrenar forzado manualmente:
+python train/train_model_sre.py
+
+# Validación rápida del modelo estable
+python predict_joblib.py
 
 Cada ejecución de `dvc repro` garantiza la regeneración exacta del pipeline y los resultados, asegurando reproducibilidad total.
 
