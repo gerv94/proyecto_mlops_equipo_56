@@ -87,3 +87,4 @@ data/raw/
 !.dvc/
 !dvc.yaml
 !dvc.lock
+/models
