@@ -1,11 +1,11 @@
 ﻿stages:
   preprocessing:
-    cmd: python run_eda.py
+    cmd: python mlops/run_preprocess.py
     deps:
-      - run_eda.py
+      - mlops/run_preprocess.py
+      - mlops/preprocess.py
       - mlops/dataset.py
       - mlops/features.py
-      - mlops/plots.py
       - data/raw/
     outs:
       - data/interim/student_interim_clean.csv
