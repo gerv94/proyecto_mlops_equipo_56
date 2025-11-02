@@ -68,8 +68,11 @@ def coerce_numeric_col(s: pd.Series) -> pd.Series:
                  .str.strip()
                  .replace({"": None, "nan": None, "None": None}))
     
-    # Intentamos convertir a numérico (mantiene texto si no se puede convertir)
-    return pd.to_numeric(cleaned, errors="ignore")
+    # Intentamos convertir a numérico, devolviendo original si falla
+    try:
+        return pd.to_numeric(cleaned)
+    except (ValueError, TypeError):
+        return cleaned
 
 def basic_typing(df: pd.DataFrame) -> pd.DataFrame:
     """

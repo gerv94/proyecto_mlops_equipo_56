@@ -111,9 +111,20 @@ train: .ensure_venv ## Train model using DVC pipeline
 	@$(DVC) repro
 	@echo "Training complete. Check models/ and reports/ for outputs."
 
+train_multiple: .ensure_venv ## Train multiple models with comparison
+	@echo "Training multiple models..."
+	@PYTHONPATH=. $(PYTHON_INTERPRETER) train/train_multiple_models.py
+	@echo "Multiple models training complete."
+
+train_enhanced: .ensure_venv ## Train enhanced models
+	@echo "Training enhanced models..."
+	@PYTHONPATH=. $(PYTHON_INTERPRETER) train/train_enhanced_models.py
+	@echo "Enhanced models training complete."
+
 mlflow: .ensure_venv ## Start MLflow UI server
 	@echo "Starting MLflow UI at http://127.0.0.1:5001"
-	@$(MLFLOW) ui --host 127.0.0.1 --port 5001
+	@echo "Logs will be written to mlflow.log"
+	@$(MLFLOW) ui --host 127.0.0.1 --port 5001 2>&1 | tee mlflow.log
 
 test: .ensure_venv ## Run tests with pytest
 	@echo "Running tests..."

@@ -1,6 +1,6 @@
 ﻿stages:
   preprocessing:
-    cmd: python mlops/run_preprocess.py
+    cmd: PYTHONPATH=. python mlops/run_preprocess.py
     deps:
       - mlops/run_preprocess.py
       - mlops/preprocess.py
@@ -11,7 +11,7 @@
       - data/interim/student_interim_clean.csv
       - data/interim/student_interim_preprocessed.csv
   training:
-    cmd: python train/train_model_sre.py
+    cmd: PYTHONPATH=. python train/train_model_sre.py
     deps:
       - train/train_model_sre.py
       - data/interim/student_interim_clean.csv
