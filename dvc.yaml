@@ -1,18 +1,20 @@
-stages:
+﻿stages:
   preprocessing:
-    cmd: python run_eda.py
+    cmd: python -m mlops.run_preprocess
     deps:
-    - mlops/dataset.py
-    - mlops/features.py
-    - run_eda.py
+      - mlops/run_preprocess.py
+      - mlops/preprocess.py
+      - mlops/dataset.py
+      - mlops/features.py
+      - data/raw/
     outs:
-    - data/interim/student_interim_clean.csv
-    - data/interim/student_interim_preprocessed.csv
+      - data/interim/student_interim_clean.csv
+      - data/interim/student_interim_preprocessed.csv
   training:
     cmd: python train/train_model_sre.py
     deps:
-    - data/interim/student_interim_clean.csv
-    - data/interim/student_interim_preprocessed.csv
+      - train/train_model_sre.py
+      - data/interim/student_interim_clean.csv
+      - data/interim/student_interim_preprocessed.csv
     outs:
-    - models/model_latest.joblib
-    - reports/classification_report_latest.txt
+      - models
