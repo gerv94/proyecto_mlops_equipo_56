@@ -1,19 +1,62 @@
-import mlflow
-import mlflow.sklearn
-import os
+﻿import os
 import pandas as pd
+import mlflow
+from mlflow.tracking import MlflowClient
 
-# Ruta completa al modelo entrenado
-model_path = os.path.join("mlruns", "419557527186161746", "models", "m-2d309fe2933d4f2e9d83e67e4ab855f9", "artifacts")
+# Tracking local y experimento (igual que en training)
+mlflow.set_tracking_uri("file:./mlruns")
+EXP_NAME = "student_performance_experiment_fase2"
 
-# Cargar el modelo
-loaded_model = mlflow.sklearn.load_model(model_path)
-print("✅ Modelo cargado correctamente desde la ruta especificada")
+client = MlflowClient()
+exp = client.get_experiment_by_name(EXP_NAME)
+assert exp is not None, f"Experimento no existe: {EXP_NAME}"
 
-# Validar el modelo con tus datos
-X_test = pd.read_csv("data/interim/student_interim_preprocessed.csv")
+# Último run (más reciente)
+runs = client.search_runs(
+    experiment_ids=[exp.experiment_id],
+    order_by=["attributes.end_time DESC"],
+    max_results=1,
+)
+assert runs, f"No hay runs en el experimento {EXP_NAME}"
+run_id = runs[0].info.run_id
+print("Usando run_id:", run_id)
 
-y_test = pd.read_csv("data/interim/student_interim_clean.csv")["Performance"]
+# Encontrar subcarpeta con archivo MLmodel (p.ej. student_model)
+candidate_names = ["student_model", "model", "sklearn-model"]
+artifact_subpath = None
 
-accuracy = loaded_model.score(X_test, y_test)
-print(f"Accuracy del modelo cargado: {accuracy:.4f}")
+for name in candidate_names:
+    try:
+        client.list_artifacts(run_id, name)
+        artifact_subpath = name
+        break
+    except Exception:
+        pass
+
+if artifact_subpath is None:
+    root_items = client.list_artifacts(run_id)
+    for it in root_items:
+        if it.is_dir:
+            try:
+                inner = client.list_artifacts(run_id, it.path)
+                if any(os.path.basename(x.path) == "MLmodel" for x in inner):
+                    artifact_subpath = it.path
+                    break
+            except Exception:
+                continue
+
+assert artifact_subpath is not None, "No encontré un artifact de modelo con archivo MLmodel en el run."
+
+# Cargar por URI MLflow
+model_uri = f"runs:/{run_id}/{artifact_subpath}"
+print("Model URI:", model_uri)
+loaded_model = mlflow.sklearn.load_model(model_uri)
+print("✅ Modelo cargado correctamente")
+
+# Datos ya preprocesados por tu pipeline DVC
+X = pd.read_csv("data/interim/student_interim_preprocessed.csv")
+y = pd.read_csv("data/interim/student_interim_clean.csv")["Performance"]
+
+# Evaluación
+acc = loaded_model.score(X, y)
+print(f"Accuracy del modelo cargado: {acc:.4f}")
