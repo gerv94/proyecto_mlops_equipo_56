@@ -144,13 +144,13 @@ Python 3.12.6
 pip install -r requirements.txt
 ```
 
-# Ejecuta el pipeline completo (preprocessing + training)
+### Ejecuta el pipeline completo (preprocessing + training)
 dvc repro
 
-# O si quieres entrenar forzado manualmente:
+### O si se quiere entrenar forzado manualmente
 python train/train_model_sre.py
 
-# Validación rápida del modelo estable
+### Validación rápida del modelo estable
 python predict_joblib.py
 
 Cada ejecución de `dvc repro` garantiza la regeneración exacta del pipeline y los resultados, asegurando reproducibilidad total.
