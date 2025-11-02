@@ -61,10 +61,10 @@ def build_all_eda(dfm, dfo):
 # Builder de reporte de modelos
 # -----------------------------------------------------------------------------
 
-def build_models_report(experiment_name="student_performance_complete_experiment"):
+def build_models_report(experiment_name="student_performance_complete_experiment", tracking_uri=None):
     """Genera reporte comparativo de modelos"""
     from mlops.report_html_models import build_html as build_html_models
-    return build_html_models(experiment_name=experiment_name)
+    return build_html_models(experiment_name=experiment_name, tracking_uri=tracking_uri)
 
 
 # -----------------------------------------------------------------------------
@@ -77,10 +77,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Ejemplos de uso:
-  python run_reports.py                  # Genera todos los reportes
-  python run_reports.py --type eda       # Solo reportes EDA
-  python run_reports.py --type models    # Solo reporte de modelos
-  python run_reports.py --type all       # Todos (equivalente a sin argumentos)
+  python run_reports.py                          # Genera todos los reportes
+  python run_reports.py --type eda               # Solo reportes EDA
+  python run_reports.py --type models            # Solo reporte de modelos
+  python run_reports.py --type models --mlflow-tracking-uri http://server:5000  # Con servidor remoto
+  python run_reports.py --type all               # Todos (equivalente a sin argumentos)
         """
     )
     
@@ -96,6 +97,13 @@ Ejemplos de uso:
         type=str,
         default="student_performance_complete_experiment",
         help="Nombre del experimento en MLflow para reporte de modelos (default: student_performance_complete_experiment)"
+    )
+    
+    parser.add_argument(
+        "--mlflow-tracking-uri",
+        type=str,
+        default=None,
+        help="URI del servidor MLflow (default: lee de MLFLOW_TRACKING_URI o usa local)"
     )
     
     args = parser.parse_args()
@@ -132,7 +140,7 @@ Ejemplos de uso:
         print("-"*80)
         
         try:
-            out = build_models_report(args.experiment)
+            out = build_models_report(args.experiment, args.mlflow_tracking_uri)
             
             if out:
                 all_outputs.append(out)

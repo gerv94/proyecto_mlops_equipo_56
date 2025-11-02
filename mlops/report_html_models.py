@@ -5,6 +5,7 @@
 # -----------------------------------------------------------------------------
 
 from pathlib import Path
+import os
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -26,17 +27,22 @@ PALETTE = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
 # Funciones auxiliares
 # -----------------------------------------------------------------------------
 
-def load_results_from_mlflow(experiment_name="student_performance_complete_experiment"):
+def load_results_from_mlflow(experiment_name="student_performance_complete_experiment", tracking_uri=None):
     """
     Carga resultados de experimentos desde MLflow.
     
     Args:
         experiment_name: Nombre del experimento en MLflow
+        tracking_uri: URI del tracking server de MLflow (si None usa local)
         
     Returns:
         dict: Diccionario con resultados de modelos
     """
-    mlflow.set_tracking_uri("file:./mlruns")
+    if tracking_uri is None:
+        # Intentar cargar desde variable de entorno o usar local
+        tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "file:./mlruns")
+    
+    mlflow.set_tracking_uri(tracking_uri)
     
     try:
         experiment = mlflow.get_experiment_by_name(experiment_name)
@@ -238,13 +244,14 @@ def create_ranking_table(df):
 # Función principal de construcción HTML
 # -----------------------------------------------------------------------------
 
-def build_html(results_dict=None, experiment_name="student_performance_complete_experiment"):
+def build_html(results_dict=None, experiment_name="student_performance_complete_experiment", tracking_uri=None):
     """
     Construye el reporte HTML completo de comparación de modelos.
     
     Args:
         results_dict: Diccionario con resultados (opcional, si None carga de MLflow)
         experiment_name: Nombre del experimento en MLflow
+        tracking_uri: URI del tracking server de MLflow
         
     Returns:
         Path: Ruta del archivo HTML generado
@@ -252,7 +259,7 @@ def build_html(results_dict=None, experiment_name="student_performance_complete_
     
     # Cargar resultados
     if results_dict is None:
-        results_dict = load_results_from_mlflow(experiment_name)
+        results_dict = load_results_from_mlflow(experiment_name, tracking_uri)
     
     if not results_dict:
         print("[ERROR] No results available to generate report.")
