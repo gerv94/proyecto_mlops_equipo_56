@@ -47,6 +47,10 @@ checkpoints/
 
 # Evitar subir datos reales
 data/raw/
+
+# Excepción: ¡Permitir los punteros DVC!
+!data/raw/*.dvc
+
 !data/README.md  # Solo mantener referencia vacía o documentación
 
 # =====================================================
