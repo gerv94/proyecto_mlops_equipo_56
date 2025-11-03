@@ -34,14 +34,13 @@ cmd = [
     "--port", "5001"
 ]
 
-# ---------------------------------------------------------------
-# 3. Ejecución del proceso
-# ---------------------------------------------------------------
-# subprocess.run() mantiene la sesión abierta hasta que el usuario
-# la cierre manualmente (Ctrl+C). Esto garantiza trazabilidad.
-# ---------------------------------------------------------------
-print("===============================================================")
-print("  Iniciando MLflow UI en http://127.0.0.1:5001")
-print("  Presiona Ctrl+C para detener el servidor.")
-print("===============================================================")
-subprocess.run(cmd)
+def run_mlflow_ui():
+    """Launch MLflow UI server."""
+    print("===============================================================")
+    print("  Starting MLflow UI at http://127.0.0.1:5001")
+    print("  Press Ctrl+C to stop server.")
+    print("===============================================================")
+    subprocess.run(cmd)
+
+if __name__ == "__main__":
+    run_mlflow_ui()

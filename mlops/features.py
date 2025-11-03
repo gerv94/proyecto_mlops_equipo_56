@@ -1,201 +1,76 @@
 import pandas as pd
+import numpy as np
 from .config import TABLES
-
+from mlops.core.feature_engineering import FeatureEngineering
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.decomposition import PCA
-import seaborn as sns
-import matplotlib.pyplot as plt
-import numpy as np
 
-# Asegura que exista la carpeta TABLES (almacenará tablas o artefactos derivados)
 TABLES.mkdir(parents=True, exist_ok=True)
 
-# Umbral heurístico: columnas con <= 30 valores únicos se tratarán como categóricas
+_feature_eng = FeatureEngineering()
 CATEGORICAL_GUESS_MAX = 30
 
 
 # -----------------------------------------------------------------------------
 # FUNCIONES PARA CLASIFICAR COLUMNAS NUMÉRICAS Y CATEGÓRICAS
 # -----------------------------------------------------------------------------
-def split_num_cat(df: pd.DataFrame):
-    """
-    Divide las columnas de un DataFrame entre numéricas y categóricas usando
-    una heurística basada en el tipo de datos y la cardinalidad.
-
-    1. Detecta tipos numéricos directamente con `pandas.api.types.is_numeric_dtype`.
-    2. Cualquier columna con <= 30 valores únicos se considera categórica
-       (esto cubre columnas tipo "score bands", "levels", etc.).
-    3. Se ajustan listas finales para evitar duplicados.
-
-    Args:
-        df (pd.DataFrame): DataFrame de entrada.
-
-    Returns:
-        tuple[list[str], list[str]]: 
-            - Lista de columnas numéricas.
-            - Lista de columnas categóricas.
-    """
-    # Columnas que pandas detecta como numéricas
-    num_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
-
-    # Inicialmente, las demás se marcan como categóricas
-    cat_cols = [c for c in df.columns if c not in num_cols]
-
-    # Heurística adicional: columnas con pocos valores únicos son categóricas
-    cat_cols = list(
-        {c for c in cat_cols} |
-        {c for c in df.columns if df[c].nunique(dropna=True) <= CATEGORICAL_GUESS_MAX}
-    )
-
-    # Refinamos numéricas para eliminar las categóricas detectadas
-    num_cols = [c for c in df.columns if c not in cat_cols]
-    return num_cols, cat_cols
+def split_num_cat(dataframe: pd.DataFrame):
+    """Split columns into numeric and categorical (delegates to FeatureEngineering)."""
+    return _feature_eng.split_numeric_categorical(dataframe)
 
 
 # -----------------------------------------------------------------------------
 # FUNCIONES DE LIMPIEZA DE VARIABLES CATEGÓRICAS
 # -----------------------------------------------------------------------------
-def normalize_categories(s: pd.Series) -> pd.Series:
-    """
-    Normaliza texto en columnas categóricas para evitar duplicados debidos a formato.
+def normalize_categories(series: pd.Series) -> pd.Series:
+    """Normalize categorical text (delegates to FeatureEngineering)."""
+    return _feature_eng.normalize_categories(series)
 
-    Estandariza el texto:
-        - Convierte todo a minúsculas.
-        - Elimina espacios extra al inicio, final y duplicados entre palabras.
-    
-    Args:
-        s (pd.Series): Columna del DataFrame.
-
-    Returns:
-        pd.Series: Columna normalizada si es tipo 'object'; caso contrario, se devuelve igual.
-    """
-    if s.dtype == object:
-        return (
-            s.astype(str)
-             .str.strip()                    # elimina espacios en extremos
-             .str.replace(r"\s+", " ", regex=True)  # reemplaza múltiples espacios por uno
-             .str.lower()                    # pasa todo a minúsculas
-        )
-    return s
-
-
-def clean_categoricals(df: pd.DataFrame, cat_cols):
-    """
-    Aplica `normalize_categories` a todas las columnas categóricas del DataFrame.
-
-    Args:
-        df (pd.DataFrame): DataFrame original.
-        cat_cols (list[str]): Lista de columnas categóricas.
-
-    Returns:
-        pd.DataFrame: Copia del DataFrame con valores categóricos normalizados.
-    """
-    out = df.copy()
-    for c in cat_cols:
-        out[c] = normalize_categories(out[c])
-    return out
+def clean_categoricals(dataframe: pd.DataFrame, categorical_cols):
+    """Clean categorical columns (delegates to FeatureEngineering)."""
+    return _feature_eng.clean_categoricals(dataframe, categorical_cols)
 
 
 # -----------------------------------------------------------------------------
 # PREPROCESAMIENTO BÁSICO (para EDA o baseline)
 # -----------------------------------------------------------------------------
-def minimal_preprocess(df: pd.DataFrame):
-    """
-    Realiza un preprocesamiento mínimo para preparar los datos antes del modelado o EDA.
-
-    - Imputa valores faltantes:
-        * Numéricas → mediana.
-        * Categóricas → moda (valor más frecuente).
-    - Retorna tanto el DataFrame transformado como las listas de columnas numéricas y categóricas.
-
-    Nota:
-        Este enfoque es deliberadamente simple (no usa sklearn.Pipeline)
-        y está pensado para análisis exploratorio rápido.
-
-    Args:
-        df (pd.DataFrame): DataFrame de entrada.
-
-    Returns:
-        tuple[pd.DataFrame, list[str], list[str]]:
-            - DataFrame preprocesado.
-            - Lista de columnas numéricas.
-            - Lista de columnas categóricas.
-    """
-    num_cols, cat_cols = split_num_cat(df)
-    out = df.copy()
-
-    # Imputación simple por tipo de variable
-    for c in num_cols:
-        out[c] = out[c].fillna(out[c].median())
-    for c in cat_cols:
-        out[c] = out[c].fillna(out[c].mode().iloc[0])
-
-    return out, num_cols, cat_cols
+def minimal_preprocess(dataframe: pd.DataFrame):
+    """Minimal imputation preprocessing (delegates to FeatureEngineering)."""
+    numeric_cols, categorical_cols = split_num_cat(dataframe)
+    imputed = _feature_eng.minimal_impute(dataframe)
+    return imputed, numeric_cols, categorical_cols
 
 
 # -----------------------------------------------------------------------------
 # PREPROCESAMIENTO AVANZADO (ESCALADO + ONE-HOT + PCA)
 # -----------------------------------------------------------------------------
 def preprocess_advanced(
-    df: pd.DataFrame,
+    dataframe: pd.DataFrame,
     num_cols: list[str],
     cat_cols: list[str],
     n_components: int = 3
 ) -> pd.DataFrame:
-    """
-    Preprocesamiento para modelado:
-      - Escalado de numéricas (StandardScaler)
-      - Codificación One-Hot de categóricas (handle_unknown='ignore')
-      - PCA opcional (añade columnas PC1..PCk)
-
-    Reglas:
-      - Si no hay numéricas, no escala.
-      - Si no hay categóricas, no codifica.
-      - PCA solo si hay columnas suficientes tras combinar numéricas + One-Hot.
-    """
-    df_proc = df.copy()
-
-    # Escalado de numéricas
-    if len(num_cols) > 0:
-        scaler = StandardScaler()
-        df_proc[num_cols] = scaler.fit_transform(df_proc[num_cols])
-
-    # Codificación One-Hot (compatibilidad de versiones)
-    df_encoded = None
-    if len(cat_cols) > 0:
-        try:
-            encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
-        except TypeError:
-            encoder = OneHotEncoder(sparse=False, handle_unknown='ignore')
-        encoded = encoder.fit_transform(df_proc[cat_cols])
-        encoded_cols = encoder.get_feature_names_out(cat_cols)
-        df_encoded = pd.DataFrame(encoded, columns=encoded_cols, index=df_proc.index)
-
-    # Unir partes
+    """Advanced preprocessing with scaling, encoding, and PCA."""
+    df_processed = dataframe.copy()
     parts = []
-    if len(num_cols) > 0:
-        parts.append(df_proc[num_cols])
-    if df_encoded is not None:
-        parts.append(df_encoded)
-
+    
+    if num_cols:
+        scaled_df, _ = _feature_eng.scale_numerics(df_processed, num_cols)
+        parts.append(scaled_df[num_cols])
+    
+    if cat_cols:
+        encoded_frame, _ = _feature_eng.encode_categoricals(df_processed, cat_cols)
+        if encoded_frame is not None:
+            parts.append(encoded_frame)
+    
     if not parts:
-        print("No se encontraron columnas numéricas ni categóricas para transformar.")
-        return df_proc
-
-    X = pd.concat(parts, axis=1)
-
-    # PCA (Opcional)
+        print("No columns to transform")
+        return df_processed
+    
+    combined = pd.concat(parts, axis=1)
+    
     if n_components and n_components > 0:
-        max_components = min(n_components, X.shape[1])
-        if max_components >= 1:
-            pca = PCA(n_components=max_components, random_state=42)
-            components = pca.fit_transform(X)
-            pca_cols = [f"PC{i+1}" for i in range(max_components)]
-            df_pca = pd.DataFrame(components, columns=pca_cols, index=X.index)
-            print("Varianza explicada (PCA):", np.round(pca.explained_variance_ratio_, 3))
-            X = pd.concat([X, df_pca], axis=1)
-        else:
-            print("PCA omitido: menos columnas que componentes solicitados.")
-
-    print("Preprocesamiento avanzado finalizado.")
-    return X
+        combined, _ = _feature_eng.apply_pca(combined, n_components)
+    
+    print("Advanced preprocessing complete")
+    return combined

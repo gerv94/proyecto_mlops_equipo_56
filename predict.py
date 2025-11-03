@@ -1,7 +1,8 @@
-﻿import os
+import os
 import pandas as pd
 import mlflow
 from mlflow.tracking import MlflowClient
+from mlops.models.evaluator import ModelEvaluator
 
 # Tracking local y experimento (igual que en training)
 mlflow.set_tracking_uri("file:./mlruns")
@@ -53,10 +54,12 @@ print("Model URI:", model_uri)
 loaded_model = mlflow.sklearn.load_model(model_uri)
 print("✅ Modelo cargado correctamente")
 
-# Datos ya preprocesados por tu pipeline DVC
 X = pd.read_csv("data/interim/student_interim_preprocessed.csv")
 y = pd.read_csv("data/interim/student_interim_clean.csv")["Performance"]
 
-# Evaluación
-acc = loaded_model.score(X, y)
-print(f"Accuracy del modelo cargado: {acc:.4f}")
+evaluator = ModelEvaluator()
+y_pred = loaded_model.predict(X)
+metrics = evaluator.evaluate_classification(y, y_pred)
+
+print(f"Accuracy: {metrics['accuracy']:.4f}")
+print(f"F1 (weighted): {metrics['f1_weighted']:.4f}")

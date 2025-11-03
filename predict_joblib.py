@@ -1,11 +1,15 @@
-﻿import joblib
+import joblib
 import pandas as pd
+from mlops.models.evaluator import ModelEvaluator
 
-# Carga el modelo estable escrito por training
 model = joblib.load("models/model_latest.joblib")
 
-# Carga datasets ya generados por DVC
 X = pd.read_csv("data/interim/student_interim_preprocessed.csv")
 y = pd.read_csv("data/interim/student_interim_clean.csv")["Performance"]
 
-print("Accuracy:", model.score(X, y))
+evaluator = ModelEvaluator()
+y_pred = model.predict(X)
+metrics = evaluator.evaluate_classification(y, y_pred)
+
+print(f"Accuracy: {metrics['accuracy']:.4f}")
+print(f"F1 (weighted): {metrics['f1_weighted']:.4f}")
