@@ -1,4 +1,6 @@
 [core]
-    remote = local_storage
-['remote "local_storage"']
-    url = C:\Users\felip\OneDrive\dvc_storage
+    remote = team_remote
+['remote "team_remote"']
+    url = s3://itesm-mna/202502-equipo56
+    region = us-east-2
+    profile = equipo56
