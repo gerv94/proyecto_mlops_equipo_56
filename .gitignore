@@ -45,13 +45,16 @@ checkpoints/
 # DATOS INTERMEDIOS Y CRUDOS
 # =====================================================
 
-# Evitar subir datos reales
-data/raw/
+# 1. NO ignora el directorio data/raw en sí, para que las excepciones funcionen.
+#    Solo ignoramos todos los archivos y subdirectorios dentro de él.
+data/raw/* data/raw/**/*
 
-# Excepción: ¡Permitir los punteros DVC!
+# 2. Excepción: ¡Permitir los punteros DVC! (Sobrescribe la regla anterior)
 !data/raw/*.dvc
 
-!data/README.md  # Solo mantener referencia vacía o documentación
+# 3. Excepción: Permitir la documentación (README)
+!data/raw/README.md
+
 
 # =====================================================
 # REPORTES Y DOCUMENTACIÓN
