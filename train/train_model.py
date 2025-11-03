@@ -5,6 +5,7 @@ from sklearn.metrics import accuracy_score
 import mlflow
 import mlflow.sklearn
 import os
+from mlops.config import PREPROCESSED_CSV, CLEAN_CSV
 
 # ==============================
 # 1. Configuración de MLflow
@@ -16,10 +17,8 @@ mlflow.set_experiment("student_performance_experiment")
 # ==============================
 # 2. Cargar datasets
 # ==============================
-X = pd.read_csv("data/interim/student_interim_preprocessed.csv")
-
-
-y = pd.read_csv("data/interim/student_interim_clean.csv")["Performance"]
+X = pd.read_csv(PREPROCESSED_CSV)
+y = pd.read_csv(CLEAN_CSV)["Performance"]
 
 # ==============================
 # 3. Dividir datos

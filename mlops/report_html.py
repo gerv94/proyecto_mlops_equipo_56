@@ -8,165 +8,76 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import plotly.graph_objects as go
 from .config import REPORTS
-from . import features  # Reutiliza utilidades como split_num_cat()
+from . import features
+from mlops.reports.insights import InsightGenerator
+from mlops.utils.common import guess_target
 
-# Carpeta de salida para los reportes HTML
 REPORTS_HTML = (REPORTS / "eda_html")
 REPORTS_HTML.mkdir(parents=True, exist_ok=True)
 
-# Paleta de colores (Ocean Serenity)
 PALETTE = ["#041B25", "#0E3A4B", "#4A7486", "#AFC4B2", "#EFF5DE"]
+
+_insight_gen = InsightGenerator()
 
 
 # -----------------------------------------------------------------------------
 # Funciones auxiliares (detección y análisis de datos)
 # -----------------------------------------------------------------------------
-def guess_target(df: pd.DataFrame):
-    """
-    Intenta detectar automáticamente la columna objetivo (target) 
-    a partir de nombres comunes o heurística basada en cardinalidad.
-    """
-    for c in ["Performance", "performance", "target", "label", "Target", "Label"]:
-        if c in df.columns:
-            return c
-    # Fallback: busca columnas categóricas con pocas clases (2–10)
-    cands = [(c, df[c].nunique(dropna=True)) for c in df.columns]
-    cands = [c for c, n in cands if 2 <= n <= 10]
-    return cands[0] if cands else None
 
 
-def compute_summary_metrics(df: pd.DataFrame):
-    """
-    Calcula métricas descriptivas generales sobre el DataFrame:
-    - Tamaño, % nulos, duplicados, uso de memoria, cardinalidad, etc.
-    """
-    rows, cols = df.shape
-    num_cols, cat_cols = features.split_num_cat(df)
-    n_num, n_cat = len(num_cols), len(cat_cols)
-    null_pct_mean = float(df.isna().mean().mean() * 100)
-    dups = int(df.duplicated().sum())
-    mem_mb = float(df.memory_usage(deep=True).sum() / 1e6)
-
-    # Cardinalidad por columna
-    cardinality = df.nunique(dropna=True).sort_values(ascending=False)
+def compute_summary_metrics(dataframe: pd.DataFrame):
+    """Compute summary metrics for DataFrame."""
+    rows, cols = dataframe.shape
+    numeric_cols, categorical_cols = features.split_num_cat(dataframe)
+    n_numeric, n_categorical = len(numeric_cols), len(categorical_cols)
+    null_pct_mean = float(dataframe.isna().mean().mean() * 100)
+    duplicates = int(dataframe.duplicated().sum())
+    mem_mb = float(dataframe.memory_usage(deep=True).sum() / 1e6)
+    cardinality = dataframe.nunique(dropna=True).sort_values(ascending=False)
     cardinality_mean = float(cardinality.mean()) if len(cardinality) else 0.0
 
     return {
         "rows": rows,
         "cols": cols,
-        "n_num": n_num,
-        "n_cat": n_cat,
+        "n_num": n_numeric,
+        "n_cat": n_categorical,
         "null_pct_mean": round(null_pct_mean, 2),
-        "dups": dups,
+        "dups": duplicates,
         "mem_mb": round(mem_mb, 2),
         "cardinality": cardinality,
         "cardinality_mean": round(cardinality_mean, 2),
-        "num_cols": num_cols,
-        "cat_cols": cat_cols,
+        "num_cols": numeric_cols,
+        "cat_cols": categorical_cols,
     }
 
 
 # -----------------------------------------------------------------------------
 # Generadores de "insights" (texto automático contextual)
 # -----------------------------------------------------------------------------
-def insight_global(df: pd.DataFrame, target: str, m: dict) -> str:
-    """
-    Genera una descripción general del dataset combinando métricas y contexto.
-    """
-    nulls_by_col = (df.isna().mean() * 100).sort_values(ascending=False)
-    high_nulls = nulls_by_col[nulls_by_col > 10].index.tolist()
+def insight_global(dataframe: pd.DataFrame, target: str, metrics: dict) -> str:
+    """Generate global insight (delegates to InsightGenerator)."""
+    return _insight_gen.global_overview(dataframe, target)
 
-    txt_target = f"Target estimado: {target}." if target else "No se detectó target automáticamente."
-    txt_nulls = (
-        f"{m['null_pct_mean']}% nulos promedio; columnas con >10% nulos: {', '.join(high_nulls)}."
-        if len(high_nulls)
-        else f"{m['null_pct_mean']}% nulos promedio; sin columnas con >10% nulos."
-    )
+def insight_target(dataframe: pd.DataFrame, target: str) -> str:
+    """Generate target insight (delegates to InsightGenerator)."""
+    return _insight_gen.target_analysis(dataframe, target)
 
-    return (
-        f"El dataset contiene <b>{m['rows']}</b> filas y <b>{m['cols']}</b> columnas "
-        f"({m['n_num']} numéricas, {m['n_cat']} categóricas). "
-        f"{txt_target} {txt_nulls} "
-        f"Duplicados: {m['dups']}. Memoria estimada: {m['mem_mb']} MB. "
-        f"Cardinalidad media por columna: {m['cardinality_mean']}."
-    )
+def insight_missing(dataframe: pd.DataFrame) -> str:
+    """Generate missingness insight (delegates to InsightGenerator)."""
+    return _insight_gen.missingness_summary(dataframe)
 
+def insight_corr(dataframe: pd.DataFrame) -> str:
+    """Generate correlation insight (delegates to InsightGenerator)."""
+    return _insight_gen.correlation_summary(dataframe)
 
-def insight_target(df: pd.DataFrame, target: str) -> str:
-    """
-    Describe la distribución del target y si el dataset está balanceado.
-    """
-    if not target or target not in df.columns:
-        return "No se generó insight del target porque no se detectó columna objetivo."
-    vc = df[target].value_counts(normalize=True, dropna=False).sort_values(ascending=False)
-    top = (vc.iloc[0] * 100.0) if len(vc) else 0.0
-    balance = "balanceado" if vc.max() < 0.6 else "desbalanceado"
-    return f"El target <b>{target}</b> está {balance}. La clase más frecuente representa {top:.1f}%."
+def insight_numeric(dataframe: pd.DataFrame, column: str) -> str:
+    """Generate numeric column insight (delegates to InsightGenerator)."""
+    return _insight_gen.numeric_insight(dataframe, column)
 
-
-def insight_missing(df: pd.DataFrame) -> str:
-    """
-    Resume las columnas con mayor porcentaje de valores nulos.
-    """
-    nulls_by_col = (df.isna().mean() * 100).sort_values(ascending=False)
-    if nulls_by_col.max() == 0:
-        return "No se detectaron valores nulos."
-    top_cols = nulls_by_col.head(3)
-    return "Columnas con mayor porcentaje de nulos: " + ", ".join([f"{c} ({v:.1f}%)" for c, v in top_cols.items()]) + "."
-
-
-def insight_corr(df: pd.DataFrame) -> str:
-    """
-    Identifica el par de variables numéricas más correlacionadas (en valor absoluto).
-    """
-    num = df.select_dtypes(include=[np.number])
-    if num.shape[1] < 2:
-        return "No hay suficientes variables numéricas para correlación."
-    corr = num.corr(numeric_only=True).copy()
-    np.fill_diagonal(corr.values, 0.0)
-    max_pair, max_val = None, 0.0
-    for i, c1 in enumerate(corr.columns):
-        for j, c2 in enumerate(corr.columns):
-            v = abs(float(corr.loc[c1, c2]))
-            if j > i and v > max_val:
-                max_val, max_pair = v, (c1, c2)
-    if not max_pair:
-        return "No se identificaron correlaciones destacables."
-    return f"Correlación más alta: {max_pair[0]}–{max_pair[1]} (|r|={max_val:.2f})."
-
-
-def insight_numeric(df: pd.DataFrame, col: str) -> str:
-    """
-    Genera insight automático para una variable numérica.
-    Describe media, desviación y sesgo de la distribución.
-    """
-    s = df[col].dropna()
-    if len(s) == 0:
-        return f"{col}: sin datos."
-    mean, std = float(s.mean()), float(s.std(ddof=0))
-    skew = float((s.skew() if hasattr(s, "skew") else 0.0) or 0.0)
-    skew_txt = "simétrica" if abs(skew) < 0.3 else ("sesgada a la derecha" if skew > 0 else "sesgada a la izquierda")
-    return f"{col}: media={mean:.2f}, sd={std:.2f}, distribución {skew_txt}."
-
-
-def insight_categorical(df: pd.DataFrame, col: str) -> str:
-    """
-    Genera insight automático para variables categóricas.
-    Lista todas las categorías (o hasta 15) y destaca la más frecuente.
-    """
-    vc = df[col].value_counts(dropna=False, normalize=True)
-    if vc.empty:
-        return f"{col}: sin datos."
-
-    categorias = [str(cat) for cat in vc.index.tolist()]
-    categorias_str = ", ".join(categorias[:15]) + (", ..." if len(categorias) > 15 else "")
-    return (
-        f"La variable <b>{col}</b> contiene {len(vc)} categorías únicas: "
-        f"{categorias_str}. "
-        f"La más frecuente es '{vc.index[0]}' con {vc.iloc[0]*100:.1f}% de los registros."
-    )
+def insight_categorical(dataframe: pd.DataFrame, column: str) -> str:
+    """Generate categorical column insight (delegates to InsightGenerator)."""
+    return _insight_gen.categorical_insight(dataframe, column)
 
 
 # -----------------------------------------------------------------------------

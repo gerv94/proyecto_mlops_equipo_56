@@ -1,5 +1,5 @@
 import pandas as pd
-from mlops.config import TABLES
+from mlops.config import TABLES, CLEAN_CSV, PREPROCESSED_CSV
 from mlops import dataset, features, plots
 from mlops.utils.common import guess_target
 
@@ -26,8 +26,8 @@ def main():
     plots.plot_categoricals(dataframe, categorical_cols)
     
     df_clean, _, _ = features.minimal_preprocess(dataframe)
-    out_clean = dataset.save_interim(df_clean, "student_interim_clean.csv")
-    print(f"[OK] Clean data saved: {out_clean}")
+    dataset._data_manager.save(df_clean, CLEAN_CSV)
+    print(f"[OK] Clean data saved: {CLEAN_CSV}")
     
     numeric_cols_clean, categorical_cols_clean = features.split_num_cat(df_clean)
     df_ready = features.preprocess_advanced(
@@ -36,8 +36,8 @@ def main():
         cat_cols=categorical_cols_clean,
         n_components=3
     )
-    out_ready = dataset.save_interim(df_ready, "student_interim_preprocessed.csv")
-    print(f"[OK] Preprocessed data saved: {out_ready}")
+    dataset._data_manager.save(df_ready, PREPROCESSED_CSV)
+    print(f"[OK] Preprocessed data saved: {PREPROCESSED_CSV}")
 
 
 # -----------------------------------------------------------------------------

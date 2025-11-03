@@ -58,7 +58,7 @@ import seaborn as sns
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from mlops.config import FIGURES, DATA_INTERIM, CLASSIFICATION_REPORTS
+from mlops.config import FIGURES, PREPROCESSED_CSV, CLEAN_CSV, CLASSIFICATION_REPORTS
 
 # -----------------------------------------------------------------------------
 # CONSTANTES
@@ -78,14 +78,11 @@ def load_preprocessed_data():
     Returns:
         tuple[pd.DataFrame, pd.Series]: Features (X) y target (y)
     """
-    X_path = DATA_INTERIM / "student_interim_preprocessed.csv"
-    y_path = DATA_INTERIM / "student_interim_clean.csv"
-    
-    if not X_path.exists() or not y_path.exists():
+    if not PREPROCESSED_CSV.exists() or not CLEAN_CSV.exists():
         raise FileNotFoundError("Preprocessed data not found. Run EDA pipeline first.")
     
-    X = pd.read_csv(X_path)
-    y = pd.read_csv(y_path)["Performance"]
+    X = pd.read_csv(PREPROCESSED_CSV)
+    y = pd.read_csv(CLEAN_CSV)["Performance"]
     
     print(f"[INFO] Data loaded: {X.shape[0]} samples, {X.shape[1]} features")
     print(f"[INFO] Target distribution:")

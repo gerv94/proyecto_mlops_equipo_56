@@ -1,11 +1,12 @@
 import joblib
 import pandas as pd
 from mlops.models.evaluator import ModelEvaluator
+from mlops.config import PREPROCESSED_CSV, CLEAN_CSV
 
 model = joblib.load("models/model_latest.joblib")
 
-X = pd.read_csv("data/interim/student_interim_preprocessed.csv")
-y = pd.read_csv("data/interim/student_interim_clean.csv")["Performance"]
+X = pd.read_csv(PREPROCESSED_CSV)
+y = pd.read_csv(CLEAN_CSV)["Performance"]
 
 evaluator = ModelEvaluator()
 y_pred = model.predict(X)

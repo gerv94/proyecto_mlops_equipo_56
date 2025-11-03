@@ -20,6 +20,7 @@ from mlflow.models.signature import infer_signature
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
+from mlops.config import PREPROCESSED_CSV, CLEAN_CSV
 
 # ============================================================
 # 1. CONFIGURACIÓN GENERAL
@@ -49,8 +50,8 @@ logging.info("Tracking MLflow configurado correctamente (Fase 2).")
 # 3. CARGA DE DATOS
 # ============================================================
 try:
-    X = pd.read_csv("data/interim/student_interim_preprocessed.csv")
-    y = pd.read_csv("data/interim/student_interim_clean.csv")["Performance"]
+    X = pd.read_csv(PREPROCESSED_CSV)
+    y = pd.read_csv(CLEAN_CSV)["Performance"]
     logging.info(f"Datos cargados. X: {X.shape}, y: {y.shape}")
 except Exception as e:
     logging.error(f"Error al cargar datasets: {str(e)}")

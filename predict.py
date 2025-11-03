@@ -3,6 +3,7 @@ import pandas as pd
 import mlflow
 from mlflow.tracking import MlflowClient
 from mlops.models.evaluator import ModelEvaluator
+from mlops.config import PREPROCESSED_CSV, CLEAN_CSV
 
 # Tracking local y experimento (igual que en training)
 mlflow.set_tracking_uri("file:./mlruns")
@@ -54,8 +55,8 @@ print("Model URI:", model_uri)
 loaded_model = mlflow.sklearn.load_model(model_uri)
 print("✅ Modelo cargado correctamente")
 
-X = pd.read_csv("data/interim/student_interim_preprocessed.csv")
-y = pd.read_csv("data/interim/student_interim_clean.csv")["Performance"]
+X = pd.read_csv(PREPROCESSED_CSV)
+y = pd.read_csv(CLEAN_CSV)["Performance"]
 
 evaluator = ModelEvaluator()
 y_pred = loaded_model.predict(X)

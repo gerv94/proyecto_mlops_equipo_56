@@ -2,9 +2,10 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from mlops.models.model_factory import make_estimator
 from mlops.models.evaluator import ModelEvaluator
+from mlops.config import PREPROCESSED_CSV, CLEAN_CSV
 
-X = pd.read_csv("data/interim/student_interim_preprocessed.csv")
-y = pd.read_csv("data/interim/student_interim_clean.csv")["Performance"]
+X = pd.read_csv(PREPROCESSED_CSV)
+y = pd.read_csv(CLEAN_CSV)["Performance"]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
