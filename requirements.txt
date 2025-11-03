@@ -31,7 +31,7 @@ plotly>=5.0.0  # opcional: para dashboards o notebooks interactivos
 mlflow==3.5.1
 cloudpickle==3.1.0
 pyarrow==18.1.0
-dvc==3.55.2
+dvc[S3]==3.55.2
 
 # ------------------------
 # UTILITIES & ENVIRONMENT
