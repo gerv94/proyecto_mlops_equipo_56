@@ -11,7 +11,7 @@ import mlflow.sklearn
 #Prueba 
 
 # --- Cargar datos ---
-df = pd.read_csv('data/raw/student_entry_performance_original.csv')
+df = pd.read_csv('data/raw/student_interim_preprocessed.csv')
 
 X = df.drop(columns=['Performance']) 
 y = df['Performance'] 
