@@ -77,7 +77,7 @@ graph TD
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  EJECUCIÓN: python run_eda.py                                    │
+│  EJECUCIÓN: python mlops/run_preprocess.py                       │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  1. Carga de Datos                                               │
@@ -206,8 +206,8 @@ plotly==6.3.1
 # dvc.yaml
 stages:
   preprocessing:
-    cmd: python run_eda.py
-    deps: [mlops/*, run_eda.py]
+    cmd: python mlops/run_preprocess.py
+    deps: [mlops/*]
     outs: [data/interim/*]
   
   training:
@@ -272,7 +272,7 @@ RANDOM_STATE = 42
 
 ```bash
 # Opción 1: Ejecución manual paso a paso
-python run_eda.py                          # Fase 1: EDA y preprocesamiento
+python mlops/run_preprocess.py             # Fase 1: Preprocesamiento
 python train/train_model_sre.py            # Fase 2: Entrenamiento único
 python train/train_multiple_models.py      # Fase 3: Comparación multi-modelo
 python run_reports.py --type eda           # Fase 4: Reportes interactivos

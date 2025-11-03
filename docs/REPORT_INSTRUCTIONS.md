@@ -42,7 +42,6 @@ proyecto_mlops_equipo_56/
 ├── train/                       # Scripts de entrenamiento
 ├── docs/                        # Documentación técnica
 │
-├── run_eda.py                   # Ejecuta EDA tradicional
 ├── run_reports.py               # Generador unificado de reportes HTML
 ├── run_mlflow.py                # Lanza MLflow UI
 ├── requirements.txt             # Dependencias del proyecto
@@ -88,20 +87,7 @@ data/raw/
 
 ## 🚀 Ejecución del Análisis
 
-### Opción 1: EDA Tradicional (Figuras Estáticas)
-
-Genera visualizaciones PNG y datasets limpios:
-
-```bash
-python run_eda.py
-```
-
-**Resultados:**
-- Histogramas, boxplots y gráficos categóricos → `reports/figures/`
-- Dataset limpio → `data/interim/student_interim_clean.csv`
-- Dataset preprocesado → `data/interim/student_interim_preprocessed.csv`
-
-### Opción 2: Reportes HTML Interactivos
+### Generación de Reportes HTML Interactivos
 
 Genera reportes interactivos con Plotly:
 
@@ -182,8 +168,8 @@ El reporte comparativo incluye:
 ### Paso 1: Preparación de Datos
 
 ```bash
-# Ejecutar EDA completo
-python run_eda.py
+# Ejecutar preprocesamiento
+python mlops/run_preprocess.py
 
 # Verificar que se generaron los datos intermedios
 ls data/interim/
@@ -229,7 +215,7 @@ mlflow ui
 ### Dependencias
 
 - **No modifiques** el código dentro de `mlops/` directamente
-- Los únicos scripts que debes ejecutar son `run_eda.py` y `run_reports.py`
+- Los únicos scripts que debes ejecutar son `mlops/run_preprocess.py` y `run_reports.py`
 - Si falta alguna librería, instálala con: `pip install <nombre_libreria>`
 
 ### Datos y Versionado
@@ -263,9 +249,9 @@ ls data/raw/
 
 ### Error: "FileNotFoundError: preprocessed data not found"
 
-Ejecuta primero el pipeline de EDA:
+Ejecuta primero el pipeline de preprocesamiento:
 ```bash
-python run_eda.py
+python mlops/run_preprocess.py
 ```
 
 ### Error: "No experiments found in MLflow"
