@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/993790272377427900/bb41b4a40aa74e69b80a3db3c19f3397/artifacts
+end_time: 1762128725197
+entry_point_name: ''
+experiment_id: '993790272377427900'
+lifecycle_stage: active
+run_id: bb41b4a40aa74e69b80a3db3c19f3397
+run_name: run_4_RF_GridSearch
+run_uuid: bb41b4a40aa74e69b80a3db3c19f3397
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1762128583597
+status: 3
+tags: []
+user_id: Anuar

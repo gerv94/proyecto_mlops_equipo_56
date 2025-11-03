@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1762122231234
+current_stage: None
+description: ''
+last_updated_timestamp: 1762122231234
+name: 1er_modelo_rf
+run_id: 6b90a7238d5a4d4eac111227e5649f7a
+run_link: ''
+source: mlflow-artifacts:/195559443549606262/6b90a7238d5a4d4eac111227e5649f7a/artifacts/random_forest_pipeline
+status: READY
+status_message: null
+storage_location: mlflow-artifacts:/195559443549606262/6b90a7238d5a4d4eac111227e5649f7a/artifacts/random_forest_pipeline
+user_id: null
+version: 1

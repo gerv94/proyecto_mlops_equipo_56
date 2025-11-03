@@ -1,0 +1,15 @@
+digest: 0f7790f4
+name: student_entry_clean
+profile: '{"num_rows": 679, "num_elements": 8827}'
+schema: '{"mlflow_colspec": [{"type": "string", "name": "Performance", "required":
+  true}, {"type": "string", "name": "Gender", "required": false}, {"type": "string",
+  "name": "Caste", "required": true}, {"type": "string", "name": "coaching", "required":
+  true}, {"type": "string", "name": "time", "required": true}, {"type": "string",
+  "name": "Class_ten_education", "required": true}, {"type": "string", "name": "twelve_education",
+  "required": false}, {"type": "string", "name": "medium", "required": true}, {"type":
+  "string", "name": "Class_ X_Percentage", "required": false}, {"type": "string",
+  "name": "Class_XII_Percentage", "required": false}, {"type": "string", "name": "Father_occupation",
+  "required": false}, {"type": "string", "name": "Mother_occupation", "required":
+  true}, {"type": "string", "name": "mixed_type_col", "required": true}]}'
+source: '{"uri": "../data/interim/student_interim_clean_for_model_2.csv"}'
+source_type: local
