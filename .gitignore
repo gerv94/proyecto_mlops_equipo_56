@@ -31,7 +31,7 @@ Thumbs.db
 
 # Directorios de modelos y resultados
 models/
-mlruns/
+#mlruns/
 outputs/
 logs/
 runs/
@@ -47,6 +47,10 @@ checkpoints/
 
 # Evitar subir datos reales
 data/raw/
+
+# Excepción: ¡Permitir los punteros DVC!
+!data/raw/*.dvc
+
 !data/README.md  # Solo mantener referencia vacía o documentación
 
 # =====================================================
