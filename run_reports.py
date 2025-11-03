@@ -95,8 +95,8 @@ Ejemplos de uso:
     parser.add_argument(
         "--experiment",
         type=str,
-        default="student_performance_complete_experiment",
-        help="Nombre del experimento en MLflow para reporte de modelos (default: student_performance_complete_experiment)"
+        default=None,
+        help="Nombre del experimento en MLflow para reporte de modelos (default: usa el primero disponible)"
     )
     
     parser.add_argument(
@@ -140,17 +140,50 @@ Ejemplos de uso:
         print("-"*80)
         
         try:
-            out = build_models_report(args.experiment, args.mlflow_tracking_uri)
-            
-            if out:
-                all_outputs.append(out)
-                print(f"\n[OK] Reporte de modelos: {out}")
+            # Si no se especifica experimento, generar reportes separados para cada uno
+            if args.experiment is None:
+                import mlflow
+                import os
+                
+                tracking_uri = args.mlflow_tracking_uri
+                if tracking_uri is None:
+                    tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "file:./mlruns")
+                
+                mlflow.set_tracking_uri(tracking_uri)
+                all_experiments = mlflow.search_experiments()
+                
+                if not all_experiments:
+                    print("\n[WARNING] No se encontraron experimentos en MLflow.")
+                else:
+                    print(f"\n[INFO] Generando reportes separados para {len(all_experiments)} experimento(s):")
+                    for exp in all_experiments:
+                        runs_count = len(mlflow.search_runs([exp.experiment_id]))
+                        print(f"  - {exp.name} ({runs_count} runs)")
+                    
+                    # Generar un reporte separado para cada experimento
+                    for exp in all_experiments:
+                        print(f"\n[INFO] Generando reporte para: {exp.name}")
+                        out = build_models_report(exp.name, args.mlflow_tracking_uri)
+                        if out:
+                            all_outputs.append(out)
+                            print(f"[OK] Reporte generado: {out}")
+                        else:
+                            print(f"[WARNING] No se pudo generar reporte para {exp.name}")
             else:
-                print("\n[WARNING] No se encontraron modelos. Ejecuta primero:")
-                print("   python train/train_multiple_models.py")
+                # Generar reporte para el experimento específico
+                out = build_models_report(args.experiment, args.mlflow_tracking_uri)
+                
+                if out:
+                    all_outputs.append(out)
+                    print(f"\n[OK] Reporte de modelos: {out}")
+                else:
+                    print("\n[WARNING] No se encontraron modelos. Ejecuta primero:")
+                    print("   python train/train_multiple_models.py")
             
         except Exception as e:
             print(f"\n[ERROR] Error generando reporte de modelos: {str(e)}")
+            import traceback
+            traceback.print_exc()
     
     # Resumen final
     print("\n" + "="*80)

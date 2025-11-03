@@ -15,7 +15,7 @@ CLASSIFICATION_REPORTS = REPORTS / "classification_reports"
 # Archivos
 MODIFIED_CSV = DATA_RAW / "student_entry_performance_modified.csv"
 ORIGINAL_CSV = DATA_RAW / "student_entry_performance_original.csv"  # opcional
-PREPROCESSED_CSV = DATA_INTERIM/ "student_interim_preprocessed.csv"
+PREPROCESSED_CSV = DATA_INTERIM / "student_entry_performance_original.csv"
 
 # Parámetros EDA
 MAX_CATS_TO_PLOT = 20

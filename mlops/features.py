@@ -199,3 +199,67 @@ def preprocess_advanced(
 
     print("Preprocesamiento avanzado finalizado.")
     return X
+
+
+# -----------------------------------------------------------------------------
+# PREPROCESAMIENTO PARA ENTRENAMIENTO (ONE-HOT SIN PCA NI ESCALADO)
+# -----------------------------------------------------------------------------
+def preprocess_for_training(
+    df: pd.DataFrame,
+    num_cols: list[str],
+    cat_cols: list[str]
+) -> pd.DataFrame:
+    """
+    Preprocesamiento para modelado alineado con el pipeline de entrenamiento:
+      - Mantiene numéricas sin escalar (como en el notebook)
+      - Codificación One-Hot de categóricas (handle_unknown='ignore')
+      - NO aplica PCA
+      - NO aplica StandardScaler
+    
+    Esta función es compatible con el pipeline usado en train_model_randomfores_dvc_3.ipynb
+    que usa OneHotEncoder y LabelEncoder (este último solo para el target, se aplica en training).
+
+    Args:
+        df (pd.DataFrame): DataFrame limpio (ya imputado)
+        num_cols (list[str]): Lista de columnas numéricas
+        cat_cols (list[str]): Lista de columnas categóricas
+
+    Returns:
+        pd.DataFrame: DataFrame preprocesado con OneHot encoding en categóricas
+    """
+    df_proc = df.copy()
+
+    # Codificación One-Hot (compatibilidad de versiones)
+    df_encoded = None
+    if len(cat_cols) > 0:
+        try:
+            encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        except TypeError:
+            encoder = OneHotEncoder(sparse=False, handle_unknown='ignore')
+        encoded = encoder.fit_transform(df_proc[cat_cols])
+        encoded_cols = encoder.get_feature_names_out(cat_cols)
+        df_encoded = pd.DataFrame(encoded, columns=encoded_cols, index=df_proc.index)
+
+    # Identificar columnas a preservar (target y otras que no sean numéricas ni categóricas)
+    all_processed_cols = set(num_cols) | set(cat_cols)
+    preserve_cols = [c for c in df_proc.columns if c not in all_processed_cols]
+    
+    # Unir partes: numéricas (sin escalar) + categóricas codificadas + columnas preservadas
+    parts = []
+    if len(num_cols) > 0:
+        parts.append(df_proc[num_cols])
+    if df_encoded is not None:
+        parts.append(df_encoded)
+    if len(preserve_cols) > 0:
+        parts.append(df_proc[preserve_cols])
+
+    if not parts:
+        print("No se encontraron columnas numéricas ni categóricas para transformar.")
+        return df_proc
+
+    X = pd.concat(parts, axis=1)
+
+    print("Preprocesamiento para entrenamiento finalizado (OneHotEncoder, sin PCA ni escalado).")
+    if preserve_cols:
+        print(f"Columnas preservadas: {preserve_cols}")
+    return X
