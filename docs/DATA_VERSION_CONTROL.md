@@ -62,14 +62,13 @@ scipy 1.16.2
 
 ## 3) Scripts y funciones que transforman datos
 
-### 3.1 Orquestación EDA
-- **`run_eda.py`**
+### 3.1 Orquestación de Preprocesamiento
+- **`mlops/run_preprocess.py`**
   - Carga modificado → tipificación básica (`dataset.basic_typing`)
-  - Normaliza categóricas (`features.clean_categoricals`)
-  - Graficado base (`plots.*`)
-  - Imputación mínima (`features.minimal_preprocess`) → guarda `interim_clean`
-  - Preprocesamiento avanzado (`features.preprocess_advanced`) → guarda `interim_preprocessed`
-  - Target detectado automáticamente (heurística): `Performance`
+  - Normaliza categóricas (`features.clean_categoricals`) - solo limpieza de texto (sin data leakage)
+  - Preprocesamiento para entrenamiento (`features.preprocess_for_training`) → guarda `interim_preprocessed`
+  - NO aplica imputación (debe hacerse en el pipeline después de train/test split)
+  - NO aplica PCA ni StandardScaler (alineado con notebook)
 
 ### 3.2 Construcción de reportes HTML
 - **`run_reports.py`** (reemplazo de run_eda_html.py) con opciones:
@@ -125,8 +124,8 @@ scipy 1.16.2
 # 2) Instalar dependencias
 pip install -r requirements.txt
 
-# 3) EDA tradicional (figuras + CSV limpio + CSV preprocesado)
-python run_eda.py
+# 3) Preprocesamiento (CSV limpio + CSV preprocesado)
+python mlops/run_preprocess.py
 
 # 4) Reportes HTML
 #   a) Todos los reportes (EDA + Models)
@@ -163,7 +162,7 @@ python run_reports.py --type models
 ## 8) Checklist de reproducibilidad
 
 - [x] Estructura de carpetas creada automáticamente (`mlops/config.py`).  
-- [x] Scripts orquestadores (`run_eda.py`, `run_reports.py`) listos para ejecutar.  
+- [x] Scripts orquestadores (`mlops/run_preprocess.py`, `run_reports.py`) listos para ejecutar.  
 - [x] Entorno aislado (`.venv`) + `requirements.txt`.  
 - [x] Artefactos y reportes generados con rutas deterministas.  
 - [x] Este documento de control de versiones de datos.
@@ -175,7 +174,7 @@ python run_reports.py --type models
 1. **Etiquetado de corridas**: anotar hash de commit + timestamp en nombre de artefactos o en un `RUN_LOG.md`.  
 2. **MLflow/DAG** (opcional): registrar pipeline y parámetros (ya existe carpeta `mlruns/` por los experimentos de modelado).  
 3. **Validación de datos**: agregar checks (esquema/tipos/rangos) previos a guardar `interim`.  
-4. **Contenerización**: Dockerfile + `make run_eda` para automatizar entorno/ejecución.  
+4. **Contenerización**: Dockerfile + `make preprocess` para automatizar entorno/ejecución.  
 5. **(Opcional)** DVC o similar para versionado de datasets si el tamaño/flujo lo amerita.
 
 ---

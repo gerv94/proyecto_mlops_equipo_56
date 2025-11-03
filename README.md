@@ -27,11 +27,9 @@ Los datasets intermedios generados por este preprocesamiento se guardan automát
 
 ## 2. Exploración y análisis de datos (EDA)
 
-El análisis exploratorio se realiza con **Matplotlib**, **Seaborn** y **Plotly**, generando visualizaciones descriptivas y distribuciones de variables.  
-Este proceso puede ejecutarse de dos formas:
+El análisis exploratorio se realiza con **Plotly**, generando reportes HTML interactivos con visualizaciones descriptivas y distribuciones de variables.  
 
 ```bash
-python run_eda.py          # EDA clásico con gráficos estáticos
 python run_reports.py      # Reportes HTML interactivos (Plotly)
 ```
 

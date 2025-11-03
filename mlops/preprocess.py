@@ -7,7 +7,7 @@ def make_clean_interim() -> str:
     """
     Carga dataset modificado, tipifica y limpia categóricas (solo texto).
     NO hace imputación para evitar data leakage.
-    Sigue la misma lógica que run_eda_2.py.
+    Solo limpieza determinística de texto (sin estadísticas globales).
     Devuelve la ruta al CSV limpio intermedio guardado en data/interim/.
     """
     df = dataset.load_modified()
@@ -46,7 +46,7 @@ def make_preprocessed_from_clean() -> str:
         cat_cols=cat_cols_clean
     )
 
-    out_ready = dataset.save_interim(df_ready, "student_entry_performance_original.csv")
+    out_ready = dataset.save_interim(df_ready, "student_interim_preprocessed.csv")
     return out_ready
 
 def run_all() -> Tuple[str, str]:
