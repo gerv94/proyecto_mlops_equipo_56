@@ -1,0 +1,14 @@
+digest: 4443072e
+name: student_entry_raw
+profile: '{"num_rows": 666, "num_elements": 7992}'
+schema: '{"mlflow_colspec": [{"type": "string", "name": "Performance", "required":
+  true}, {"type": "string", "name": "Gender", "required": true}, {"type": "string",
+  "name": "Caste", "required": true}, {"type": "string", "name": "coaching", "required":
+  true}, {"type": "string", "name": "time", "required": true}, {"type": "string",
+  "name": "Class_ten_education", "required": true}, {"type": "string", "name": "twelve_education",
+  "required": true}, {"type": "string", "name": "medium", "required": true}, {"type":
+  "string", "name": "Class_ X_Percentage", "required": true}, {"type": "string", "name":
+  "Class_XII_Percentage", "required": true}, {"type": "string", "name": "Father_occupation",
+  "required": true}, {"type": "string", "name": "Mother_occupation", "required": true}]}'
+source: '{"uri": "../data/raw/student_entry_performance_original.csv"}'
+source_type: local
