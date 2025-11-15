@@ -30,39 +30,39 @@ Los datasets intermedios generados por este preprocesamiento se guardan automát
 El análisis exploratorio se realiza con **Plotly**, generando reportes HTML interactivos con visualizaciones descriptivas y distribuciones de variables.  
 
 ```bash
-python run_reports.py      # Reportes HTML interactivos (Plotly)
+python -m mlops.run_reports      # Reportes HTML interactivos (Plotly)
 ```
 
 Los resultados se exportan a `reports/eda_html/` y `reports/experiments_html/`.
 
 ### 2.1 Reportes HTML Interactivos
 
-El script **`run_reports.py`** es un generador unificado de reportes que permite elegir qué tipo de reporte generar:
+El script **`mlops/run_reports.py`** es un generador unificado de reportes que permite elegir qué tipo de reporte generar:
 
 #### Opciones disponibles:
 
 ```bash
 # Generar TODOS los reportes (default)
-python run_reports.py
+python -m mlops.run_reports
 
 # Solo reportes EDA (exploración de datos)
-python run_reports.py --type eda
+python -m mlops.run_reports --type eda
 
 # Solo reporte de modelos (comparación)
 # Nota: Si no se especifica --experiment, genera reportes separados para TODOS los experimentos en MLflow
-python run_reports.py --type models
+python -m mlops.run_reports --type models
 
 # Todos los reportes (explícito)
-python run_reports.py --type all
+python -m mlops.run_reports --type all
 
 # Personalizar experimento MLflow específico
-python run_reports.py --type models --experiment mi_experimento
+python -m mlops.run_reports --type models --experiment mi_experimento
 
 # Especificar servidor MLflow remoto
-python run_reports.py --type models --mlflow-tracking-uri http://server:5000
+python -m mlops.run_reports --type models --mlflow-tracking-uri http://server:5001
 
 # Combinar opciones: servidor remoto + experimento específico
-python run_reports.py --type models --experiment mi_experimento --mlflow-tracking-uri http://server:5000
+python -m mlops.run_reports --type models --experiment mi_experimento --mlflow-tracking-uri http://server:5001
 ```
 
 #### Tipos de reportes generados:
@@ -88,7 +88,7 @@ python run_reports.py --type models --experiment mi_experimento --mlflow-trackin
 python train/train_multiple_models.py
 
 # 2. Generar reportes
-python run_reports.py --type models
+python -m mlops.run_reports --type models
 
 # 3. Ver en navegador
 # Abre: reports/experiments_html/models_comparison_{experiment_name}.html

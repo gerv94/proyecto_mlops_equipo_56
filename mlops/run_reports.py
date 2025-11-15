@@ -81,11 +81,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Ejemplos de uso:
-  python run_reports.py                          # Genera todos los reportes
-  python run_reports.py --type eda               # Solo reportes EDA
-  python run_reports.py --type models            # Solo reporte de modelos
-  python run_reports.py --type models --mlflow-tracking-uri http://server:5000  # Con servidor remoto
-  python run_reports.py --type all               # Todos (equivalente a sin argumentos)
+  python -m mlops.run_reports                    # Genera todos los reportes
+  python -m mlops.run_reports --type eda         # Solo reportes EDA
+  python -m mlops.run_reports --type models      # Solo reporte de modelos
+  python -m mlops.run_reports --type models --mlflow-tracking-uri http://server:5001  # Con servidor remoto
+  python -m mlops.run_reports --type all         # Todos (equivalente a sin argumentos)
         """
     )
     
