@@ -18,7 +18,7 @@ El objetivo es analizar y modelar el dataset *Student Performance on an Entrance
 La etapa de preparación de datos se realiza ahora como preprocesamiento productivo real separado del EDA.
 Este proceso se encuentra implementado en **mlops/preprocess.py** y es ejecutado automáticamente por el pipeline de DVC mediante **mlops/run_preprocess.py**.
 
-Aquí se tipifican columnas, se normalizan categóricas, se imputan valores faltantes y se aplica preprocesamiento avanzado (escalado, One-Hot Encoding y PCA).
+Aquí se tipifican columnas, se normalizan categóricas (limpieza de texto) y se aplica preprocesamiento para entrenamiento (One-Hot Encoding sin PCA ni escalado, alineado con el pipeline de entrenamiento).
 Este flujo es el que alimenta directamente la fase de entrenamiento y asegura reproducibilidad en cualquier entorno.
 
 Los datasets intermedios generados por este preprocesamiento se guardan automáticamente en data/interim/ y son consumidos después por el proceso de entrenamiento del modelo.
@@ -49,13 +49,20 @@ python run_reports.py
 python run_reports.py --type eda
 
 # Solo reporte de modelos (comparación)
+# Nota: Si no se especifica --experiment, genera reportes separados para TODOS los experimentos en MLflow
 python run_reports.py --type models
 
 # Todos los reportes (explícito)
 python run_reports.py --type all
 
-# Personalizar experimento MLflow para reporte de modelos
+# Personalizar experimento MLflow específico
 python run_reports.py --type models --experiment mi_experimento
+
+# Especificar servidor MLflow remoto
+python run_reports.py --type models --mlflow-tracking-uri http://server:5000
+
+# Combinar opciones: servidor remoto + experimento específico
+python run_reports.py --type models --experiment mi_experimento --mlflow-tracking-uri http://server:5000
 ```
 
 #### Tipos de reportes generados:
@@ -66,11 +73,13 @@ python run_reports.py --type models --experiment mi_experimento
 - `preprocessed`: Datos preprocesados para modelado
 
 **Models Report:**
-- Comparación visual de modelos entrenados
+- Comparación visual de modelos entrenados desde MLflow
 - Gráficos interactivos (barras, radar)
 - Ranking automático por rendimiento
+- Genera un reporte separado por cada experimento cuando no se especifica `--experiment`
+- Los archivos se guardan como: `reports/experiments_html/models_comparison_{experiment_name}.html`
+- Soporta servidores MLflow remotos mediante `--mlflow-tracking-uri`
 - Se actualiza automáticamente con cada nuevo entrenamiento
-- Visible en: `reports/experiments_html/models_comparison_report.html`
 
 #### Ejemplo de flujo completo:
 
@@ -82,7 +91,8 @@ python train/train_multiple_models.py
 python run_reports.py --type models
 
 # 3. Ver en navegador
-# Abre: reports/experiments_html/models_comparison_report.html
+# Abre: reports/experiments_html/models_comparison_{experiment_name}.html
+# (Se genera un HTML separado por cada experimento encontrado en MLflow)
 ```
 
 ---

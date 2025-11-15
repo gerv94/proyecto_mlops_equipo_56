@@ -14,25 +14,28 @@ from mlops.dataset import load_original_if_exists
 
 
 # -----------------------------------------------------------------------------
-# Builders de reportes EDA
+# Builders de reportes EDA (usando clases orientadas a objetos)
 # -----------------------------------------------------------------------------
 
 def build_eda_base(dfm, dfo):
     """Genera reporte EDA base (original)"""
-    from mlops.report_html import build_html as build_html_base
-    return build_html_base(dfm, dfo)
+    from mlops.reports import EDAReport
+    report = EDAReport(variant="base")
+    return report.generate(dfm, dfo)
 
 
 def build_eda_clean(dfm, dfo):
     """Genera reporte EDA con datos limpios"""
-    from mlops.report_html_clean import build_html as build_html_clean
-    return build_html_clean(dfm, dfo)
+    from mlops.reports import EDAReport
+    report = EDAReport(variant="clean")
+    return report.generate(dfm, dfo)
 
 
 def build_eda_preprocessed():
     """Genera reporte EDA de datos preprocesados"""
-    from mlops.report_html_preprocessed import build_html_preprocessed
-    return build_html_preprocessed()
+    from mlops.reports import PreprocessedReport
+    report = PreprocessedReport()
+    return report.generate()
 
 
 def build_all_eda(dfm, dfo):
@@ -58,13 +61,14 @@ def build_all_eda(dfm, dfo):
 
 
 # -----------------------------------------------------------------------------
-# Builder de reporte de modelos
+# Builder de reporte de modelos (usando clases orientadas a objetos)
 # -----------------------------------------------------------------------------
 
 def build_models_report(experiment_name="student_performance_complete_experiment", tracking_uri=None):
     """Genera reporte comparativo de modelos"""
-    from mlops.report_html_models import build_html as build_html_models
-    return build_html_models(experiment_name=experiment_name, tracking_uri=tracking_uri)
+    from mlops.reports import ModelsReport
+    report = ModelsReport()
+    return report.generate(experiment_name=experiment_name, tracking_uri=tracking_uri)
 
 
 # -----------------------------------------------------------------------------

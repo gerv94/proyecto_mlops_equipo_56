@@ -1,9 +1,6 @@
 # ===============================================================
 # Script: run_mlflow.py
-# Descripción:
-#   Lanza la interfaz gráfica de MLflow (MLflow UI) utilizando
-#   el entorno virtual del proyecto (.venv) y el backend local
-#   de experimentos (mlruns/).
+# ... (descripción) ...
 # ===============================================================
 
 import subprocess
@@ -13,35 +10,39 @@ import os
 # ---------------------------------------------------------------
 # 1. Detección automática del entorno virtual (.venv)
 # ---------------------------------------------------------------
+
+# Define el prefijo de la ruta para retroceder un nivel
+VENV_PREFIX = os.path.join(".venv")
+
 # En Windows, los binarios están en ".venv/Scripts/"
-# En Linux/macOS (o code-server), están en ".venv/bin/"
-# ---------------------------------------------------------------
-if os.name == "nt":  # nt = Windows
-    venv_python = os.path.join(".venv", "Scripts", "python.exe")
+if os.name == "nt":
+    venv_python_relative = os.path.join(VENV_PREFIX, "Scripts", "python.exe")
 else:
-    venv_python = os.path.join(".venv", "bin", "python")
+    venv_python_relative = os.path.join(VENV_PREFIX, "bin", "python")
+
+# --- ¡CORRECCIÓN CRUCIAL AQUÍ! ---
+# Convertir la ruta a absoluta para que subprocess.run() la pueda encontrar en Windows.
+venv_python = os.path.abspath(venv_python_relative) 
+# ----------------------------------
 
 # ---------------------------------------------------------------
 # 2. Comando de ejecución de MLflow
 # ---------------------------------------------------------------
-# Se lanza el servidor UI de MLflow, apuntando al backend local.
-# Cambia el puerto si ya hay otro servicio usando el 5000.
-# En code-server o entornos remotos, usa "--host 0.0.0.0".
-# ---------------------------------------------------------------
-cmd = [
-    venv_python, "-m", "mlflow", "ui",
-    "--backend-store-uri", "file:./mlruns",
-    "--port", "5001"
-]
+cmd = [venv_python, "-m", "mlflow", "ui","--backend-store-uri", "file:./mlruns","--port", "5001"] # El backend sigue siendo relativo a la raíz
 
 # ---------------------------------------------------------------
 # 3. Ejecución del proceso
 # ---------------------------------------------------------------
-# subprocess.run() mantiene la sesión abierta hasta que el usuario
-# la cierre manualmente (Ctrl+C). Esto garantiza trazabilidad.
-# ---------------------------------------------------------------
 print("===============================================================")
-print("  Iniciando MLflow UI en http://127.0.0.1:5001")
-print("  Presiona Ctrl+C para detener el servidor.")
+print(f" Usando Python: {venv_python}") # Añadido para verificar la ruta
+print(" Iniciando MLflow UI en http://127.0.0.1:5001")
+print(" Presiona Ctrl+C para detener el servidor.")
 print("===============================================================")
-subprocess.run(cmd)
+
+# Intentar ejecutar
+try:
+    subprocess.run(cmd, check=True)
+except FileNotFoundError:
+    print("\nERROR CRÍTICO: No se encontró el ejecutable de Python en la ruta absoluta.")
+    print("Por favor, verifica que la carpeta .venv exista y que el entorno virtual haya sido creado correctamente.")
+    sys.exit(1)

@@ -1,18 +1,21 @@
 # mlops package
 from . import config, dataset, features, plots
 
-# Reportes HTML
+# Reportes HTML (sistema orientado a objetos)
 try:
-    from . import report_html, report_html_clean, report_html_preprocessed, report_html_models
+    from . import reports
+    from .reports import ReportBase, EDAReport, PreprocessedReport, ModelsReport, create_report
     __all__ = [
         'config',
         'dataset', 
         'features',
         'plots',
-        'report_html',
-        'report_html_clean',
-        'report_html_preprocessed',
-        'report_html_models'
+        'reports',
+        'ReportBase',
+        'EDAReport',
+        'PreprocessedReport',
+        'ModelsReport',
+        'create_report'
     ]
 except ImportError:
     __all__ = ['config', 'dataset', 'features', 'plots']
