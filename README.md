@@ -266,10 +266,107 @@ proyecto_mlops_equipo_56/
 | MLOps / Reproducibilidad | MLflow, DVC |
 | Servidor / API | Flask, FastAPI, Waitress |
 | Control de versiones | Git + GitHub |
+| Testing | pytest, pytest-cov |
 
 ---
 
-## 9. Control de versiones y convenciones de commits
+## 9. Pruebas unitarias y de integración
+
+El proyecto incluye pruebas automatizadas para validar componentes críticos y asegurar la estabilidad del sistema.
+
+### 9.1 Ejecución de pruebas
+
+**⚠️ Importante:** Asegúrate de usar el pytest del entorno virtual `.venv` para garantizar que uses las dependencias correctas del proyecto.
+
+#### Opción 1: Usar el script helper (Recomendado)
+```bash
+# Ejecutar todas las pruebas usando el .venv automáticamente
+python run_tests.py -q
+
+# Ejecutar con salida detallada
+python run_tests.py -v
+
+# Ejecutar pruebas específicas
+python run_tests.py tests/test_reports.py
+```
+
+#### Opción 2: Activar el entorno virtual primero
+```bash
+# En PowerShell
+.venv\Scripts\Activate.ps1
+
+# Ahora pytest usará el del .venv
+pytest -q
+pytest -v
+pytest tests/test_reports.py
+```
+
+#### Opción 3: Usar el Python del .venv directamente
+```bash
+# Ejecutar todas las pruebas
+.venv\Scripts\python.exe -m pytest -q
+
+# Con salida detallada
+.venv\Scripts\python.exe -m pytest -v
+
+# Ejecutar pruebas específicas
+.venv\Scripts\python.exe -m pytest tests/test_reports.py
+
+# Ejecutar pruebas con cobertura
+.venv\Scripts\python.exe -m pytest --cov=mlops --cov-report=html
+
+# Ejecutar solo pruebas unitarias
+.venv\Scripts\python.exe -m pytest -m unit
+
+# Ejecutar solo pruebas de integración
+.venv\Scripts\python.exe -m pytest -m integration
+```
+
+#### Opción 4: Usar Makefile (Linux/Mac)
+```bash
+make test
+```
+
+### 9.2 Estructura de pruebas
+
+```
+tests/
+├── __init__.py
+├── test_reports.py        # Pruebas para el módulo de reportes
+└── (futuros: test_features.py, test_preprocess.py, etc.)
+```
+
+### 9.3 Cobertura de pruebas
+
+Actualmente el proyecto incluye pruebas para:
+- **Módulo de reportes** (`mlops/reports.py`):
+  - Métodos estáticos de `ReportBase` (`guess_target`, `compute_summary_metrics`)
+  - Inicialización y configuración de `EDAReport`, `PreprocessedReport`, `ModelsReport`
+  - Función factory `create_report`
+  - Flujos de generación de reportes HTML
+
+### 9.4 Agregar nuevas pruebas
+
+Para agregar nuevas pruebas:
+1. Crea un archivo `tests/test_<modulo>.py`
+2. Importa el módulo a probar
+3. Define clases de prueba que hereden de `unittest.TestCase` o usen funciones con `pytest`
+4. Ejecuta con `pytest` para validar
+
+Ejemplo de prueba:
+```python
+import pytest
+from mlops.reports import ReportBase
+
+def test_guess_target():
+    df = pd.DataFrame({'Performance': ['A', 'B', 'C']})
+    result = ReportBase.guess_target(df)
+    assert result == 'Performance'
+```
+
+---
+
+## 10. Control de versiones y convenciones de commits
 
 El versionado de código se gestiona en GitHub bajo el repositorio:
 
@@ -289,11 +386,11 @@ PIPELINE: integración DVC y MLflow
 
 ---
 
-## 10. Documentación técnica
+## 11. Documentación técnica
 
 El proyecto cuenta con documentación técnica comprehensiva en `/docs/`:
 
-### 10.1 Informe SRE
+### 11.1 Informe SRE
 ```
 /docs/informe_sre_fase2.md
 ```
@@ -304,7 +401,7 @@ Incluye:
 - Resultados y métricas de desempeño del modelo.  
 - Conclusiones del Ingeniero de Confiabilidad (SRE).
 
-### 10.2 Reporte de Comparación de Modelos
+### 11.2 Reporte de Comparación de Modelos
 ```
 /docs/model_comparison_report.md
 ```
@@ -314,7 +411,7 @@ Incluye:
 - Justificación de la selección del mejor modelo.
 - Conclusiones y lecciones aprendidas del Data Scientist.
 
-### 10.3 Diagrama de Arquitectura
+### 11.3 Diagrama de Arquitectura
 ```
 /docs/architecture_diagram.md
 ```
@@ -325,7 +422,7 @@ Incluye:
 - Responsabilidades por rol del equipo.
 - Decisiones de arquitectura y mejoras futuras.
 
-### 10.4 Control de Versión de Datos
+### 11.4 Control de Versión de Datos
 ```
 /docs/DATA_VERSION_CONTROL.md
 ```

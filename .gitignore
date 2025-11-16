@@ -16,6 +16,11 @@ __pycache__/
 *.egg-info/
 *.log
 
+# Caché de herramientas de testing
+.pytest_cache/
+.coverage
+htmlcov/
+
 # Archivos de Jupyter y VS Code
 .ipynb_checkpoints/
 .vscode/
