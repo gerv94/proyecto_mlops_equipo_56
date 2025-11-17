@@ -56,34 +56,14 @@ def evaluate_drift():
     y_pred_baseline = model.predict(X_baseline)
     y_pred_drift = model.predict(X_drift)
     
-    # IMPORTANTE: Filtrar clase 'none' para coincidir con train_model_sre.py
-    # El modelo de entrenamiento excluye 'none' al calcular métricas
-    if 'none' in label_encoder.classes_:
-        none_label = label_encoder.transform(['none'])[0]
-        
-        # Filtrar baseline
-        mask_baseline = y_baseline_encoded != none_label
-        y_baseline_filtered = y_baseline_encoded[mask_baseline]
-        y_pred_baseline_filtered = y_pred_baseline[mask_baseline]
-        
-        # Filtrar drift
-        mask_drift = y_drift_encoded != none_label
-        y_drift_filtered = y_drift_encoded[mask_drift]
-        y_pred_drift_filtered = y_pred_drift[mask_drift]
-        
-        logger.info(f"Clase 'none' filtrada. Baseline: {len(y_baseline_filtered)}/{len(y_baseline_encoded)} muestras")
-        logger.info(f"Clase 'none' filtrada. Drift: {len(y_drift_filtered)}/{len(y_drift_encoded)} muestras")
-    else:
-        y_baseline_filtered = y_baseline_encoded
-        y_pred_baseline_filtered = y_pred_baseline
-        y_drift_filtered = y_drift_encoded
-        y_pred_drift_filtered = y_pred_drift
+    # NOTA: Ya no necesitamos filtrar 'none' porque los datos fueron limpiados en origen
+    # El dataset ya no contiene registros con Performance='none'
     
-    # Métricas (sin 'none')
-    acc_baseline = accuracy_score(y_baseline_filtered, y_pred_baseline_filtered)
-    acc_drift = accuracy_score(y_drift_filtered, y_pred_drift_filtered)
-    f1_baseline = f1_score(y_baseline_filtered, y_pred_baseline_filtered, average='weighted', zero_division=0)
-    f1_drift = f1_score(y_drift_filtered, y_pred_drift_filtered, average='weighted', zero_division=0)
+    # Métricas
+    acc_baseline = accuracy_score(y_baseline_encoded, y_pred_baseline)
+    acc_drift = accuracy_score(y_drift_encoded, y_pred_drift)
+    f1_baseline = f1_score(y_baseline_encoded, y_pred_baseline, average='weighted', zero_division=0)
+    f1_drift = f1_score(y_drift_encoded, y_pred_drift, average='weighted', zero_division=0)
     
     # Calcular drops
     acc_drop = (acc_baseline - acc_drift) / acc_baseline * 100 if acc_baseline > 0 else 0
@@ -110,7 +90,7 @@ REPORTE DE EVALUACIÓN DE DRIFT
 =================================================================
 
 CLASES DEL MODELO: {', '.join(label_encoder.classes_)}
-NOTA: Métricas calculadas SIN clase 'none' (igual que en entrenamiento)
+NOTA: Dataset limpio sin registros 'none'
 
 MÉTRICAS BASELINE:
   - Accuracy: {acc_baseline:.4f}

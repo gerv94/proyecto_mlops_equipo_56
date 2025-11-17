@@ -106,9 +106,47 @@ class StudentPerformanceTrainer:
             f"{df['Performance'].value_counts().to_dict()}"
         )
         
-        # Separar features y target (IGUAL QUE EL NOTEBOOK)
+        # PASO 1: ELIMINAR REGISTROS DONDE Performance = 'none', 'None' o vacío
+        initial_size = len(df)
+        df = df[df['Performance'].notna()]  # Eliminar NaN
+        df = df[~df['Performance'].astype(str).str.lower().isin(['none', 'nan', ''])]  # Eliminar 'none'
+        
+        removed_count = initial_size - len(df)
+        if removed_count > 0:
+            logging.info(f"✓ Eliminados {removed_count} registros con Performance='none' o vacío")
+            logging.info(f"Dataset después de limpieza: {df.shape}")
+        
+        # PASO 2: ELIMINAR REGISTROS CON 'none', 'None' o vacíos EN LAS FEATURES
         X = df.drop(columns=["Performance"])
         y = df["Performance"]
+        
+        # Crear máscara para registros válidos
+        valid_mask = pd.Series([True] * len(X), index=X.index)
+        
+        for col in X.columns:
+            if X[col].dtype == 'object':
+                # Detectar 'none', 'None', vacíos, NaN
+                mask_invalid = (
+                    X[col].isna() | 
+                    X[col].astype(str).str.strip().str.lower().isin(['none', 'nan', ''])
+                )
+                
+                if mask_invalid.any():
+                    invalid_count = mask_invalid.sum()
+                    logging.info(f"✓ Detectados {invalid_count} valores inválidos en '{col}'")
+                    valid_mask &= ~mask_invalid
+        
+        # Aplicar filtro
+        initial_feature_size = len(X)
+        X = X[valid_mask]
+        y = y[valid_mask]
+        removed_feature_count = initial_feature_size - len(X)
+        
+        if removed_feature_count > 0:
+            logging.info(f"✓ Eliminados {removed_feature_count} registros con valores inválidos en features")
+            logging.info(f"Dataset final: {X.shape}")
+        
+        logging.info(f"Distribución final de clases: {y.value_counts().to_dict()}")
         
         return X, y
 
@@ -308,17 +346,8 @@ class StudentPerformanceTrainer:
         Returns:
             Path to the saved confusion matrix image
         """
-        # Filtrar 'none' class
-        if "none" in self.class_names:
-            none_label = self.label_encoder.transform(["none"])[0]
-            mask_no_none = y_test != none_label
-            y_test_filtered = y_test[mask_no_none]
-            y_pred_filtered = y_pred[mask_no_none]
-        else:
-            y_test_filtered = y_test
-            y_pred_filtered = y_pred
-        
-        # Clases ordenadas (sin 'none')
+        # Ya no necesitamos filtrar 'none' porque fue eliminado en load_data
+        # Clases ordenadas
         classes_ordered = ["average", "good", "vg", "excellent"]
         labels_ordered = [
             self.label_encoder.transform([class_name])[0]
@@ -327,8 +356,8 @@ class StudentPerformanceTrainer:
         ]
         
         cm = confusion_matrix(
-            y_test_filtered,
-            y_pred_filtered,
+            y_test,
+            y_pred,
             labels=labels_ordered,
         )
         
@@ -344,7 +373,7 @@ class StudentPerformanceTrainer:
         )
         plt.xlabel("Predicción", fontsize=13, fontweight="bold")
         plt.ylabel("Real", fontsize=13, fontweight="bold")
-        plt.title("Matriz de confusión (sin 'none')", fontsize=14, fontweight="bold")
+        plt.title("Matriz de confusión", fontsize=14, fontweight="bold")
         plt.xticks(rotation=0)
         plt.yticks(rotation=0)
         
@@ -353,7 +382,7 @@ class StudentPerformanceTrainer:
         plt.close()
         
         logging.info(
-            f"Matriz de confusión guardada en {cm_path} (sin 'none', ordenada)"
+            f"Matriz de confusión guardada en {cm_path}"
         )
         return cm_path
 
@@ -367,9 +396,16 @@ class StudentPerformanceTrainer:
         Returns:
             Path to the saved model file
         """
+        # Guardar con nombre dinámico para tracking
         model_path = self.models_dir / f"model_{run_name}.joblib"
         joblib.dump(pipeline, model_path)
-        logging.info(f"Pipeline completo guardado en {model_path}")
+        logging.info(f"Pipeline guardado en {model_path}")
+        
+        # IMPORTANTE: Guardar también como best_gridsearch_amplio.joblib para DVC
+        best_model_path = self.models_dir / "best_gridsearch_amplio.joblib"
+        joblib.dump(pipeline, best_model_path)
+        logging.info(f"✓ Modelo guardado como {best_model_path} (para DVC)")
+        
         return model_path
 
     def log_to_mlflow(
