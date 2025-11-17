@@ -23,33 +23,10 @@ def make_clean_interim() -> str:
     out_clean = dataset.save_interim(df_clean, "student_interim_clean.csv")
     return out_clean
 
-def make_preprocessed_from_clean() -> str:
+def run_all() -> str:
     """
-    Toma el limpio intermedio y aplica preprocesamiento para entrenamiento
-    (OneHotEncoder sin PCA ni StandardScaler, alineado con el notebook).
+    Ejecuta el preprocesamiento completo.
+    Retorna la ruta al archivo limpio que contiene features + target.
     """
-    # Carga el limpio intermedio recién generado
-    df_clean = dataset.load_interim("student_interim_clean.csv")
-
-    # Selección de columnas tras limpieza
-    num_cols_clean, cat_cols_clean = features.split_num_cat(df_clean)
-    
-    # Excluir la columna target (Performance) de las categóricas si existe
-    target_col = 'Performance'
-    if target_col in cat_cols_clean:
-        cat_cols_clean = [c for c in cat_cols_clean if c != target_col]
-
-    # Aplica el preprocesamiento para entrenamiento (sin PCA, sin escalado)
-    df_ready = features.preprocess_for_training(
-        df_clean,
-        num_cols=num_cols_clean,
-        cat_cols=cat_cols_clean
-    )
-
-    out_ready = dataset.save_interim(df_ready, "student_interim_preprocessed.csv")
-    return out_ready
-
-def run_all() -> Tuple[str, str]:
     clean_path = make_clean_interim()
-    ready_path = make_preprocessed_from_clean()
-    return clean_path, ready_path
+    return clean_path

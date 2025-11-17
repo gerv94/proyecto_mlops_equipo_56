@@ -8,6 +8,5 @@ sys.path.insert(0, str(project_root))
 from mlops.preprocess import run_all
 
 if __name__ == "__main__":
-    clean, ready = run_all()
-    print(f"[OK] interim clean: {clean}")
-    print(f"[OK] preprocessed:  {ready}")
+    clean_path = run_all()
+    print(f"[OK] Datos limpios generados: {clean_path}")

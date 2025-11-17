@@ -1,0 +1,19 @@
+              precision    recall  f1-score   support
+
+     average       0.81      0.78      0.79        32
+        good       0.42      0.44      0.43        43
+          vg       0.41      0.38      0.39        40
+   excellent       0.32      0.35      0.33        20
+
+    accuracy                           0.49       135
+   macro avg       0.49      0.49      0.49       135
+weighted avg       0.49      0.49      0.49       135
+
+
+Mejores parámetros:
+classifier__class_weight: balanced_subsample
+classifier__max_depth: 15
+classifier__max_features: sqrt
+classifier__min_samples_leaf: 1
+classifier__min_samples_split: 5
+classifier__n_estimators: 200

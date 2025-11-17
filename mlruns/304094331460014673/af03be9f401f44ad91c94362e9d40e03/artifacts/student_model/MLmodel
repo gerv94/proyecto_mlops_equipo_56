@@ -1,0 +1,37 @@
+artifact_path: student_model
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.3
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.5.2
+mlflow_version: 2.15.1
+model_size_bytes: 220026
+model_uuid: 8606375c037d440baeaf2d2889e44725
+run_id: af03be9f401f44ad91c94362e9d40e03
+saved_input_example_info:
+  artifact_path: input_example.json
+  pandas_orient: split
+  serving_input_path: serving_input_payload.json
+  type: dataframe
+signature:
+  inputs: '[{"type": "string", "name": "Gender", "required": false}, {"type": "string",
+    "name": "Caste", "required": true}, {"type": "string", "name": "coaching", "required":
+    true}, {"type": "string", "name": "time", "required": true}, {"type": "string",
+    "name": "Class_ten_education", "required": true}, {"type": "string", "name": "twelve_education",
+    "required": false}, {"type": "string", "name": "medium", "required": true}, {"type":
+    "string", "name": "Class_ X_Percentage", "required": false}, {"type": "string",
+    "name": "Class_XII_Percentage", "required": false}, {"type": "string", "name":
+    "Father_occupation", "required": false}, {"type": "string", "name": "Mother_occupation",
+    "required": true}]'
+  outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "int32", "shape": [-1]}}]'
+  params: null
+utc_time_created: '2025-11-17 00:28:17.490061'
