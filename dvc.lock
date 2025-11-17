@@ -18,8 +18,8 @@ stages:
       size: 9433
     - path: mlops/preprocess.py
       hash: md5
-      md5: 9b32481dc54d9fa75a5d68a864cfa73c
-      size: 2408
+      md5: fae3a186e7e0147287e7b4872c093101
+      size: 2709
     - path: mlops/run_preprocess.py
       hash: md5
       md5: d029d851310b533a8855e1085f35e61e
@@ -27,21 +27,25 @@ stages:
     outs:
     - path: data/interim/student_interim_clean.csv
       hash: md5
-      md5: 543d360ae22168dcca0348a5990b30be
-      size: 57566
+      md5: 042d9dd72ddba43391f2e832f0fbabd2
+      size: 54541
   training:
-    cmd: python train/train_model_sre.py
+    cmd: python -m train.train_model_sre
     deps:
     - path: data/interim/student_interim_clean.csv
       hash: md5
-      md5: 543d360ae22168dcca0348a5990b30be
-      size: 57566
+      md5: 042d9dd72ddba43391f2e832f0fbabd2
+      size: 54541
     - path: train/train_model_sre.py
       hash: md5
-      md5: 5f8d696d2ef976f6a7a3c33bf51a51ec
-      size: 12923
+      md5: 10e5edaebeab8eb5c398f0a533b788ab
+      size: 18324
     outs:
+    - path: models/best_gridsearch_amplio.joblib
+      hash: md5
+      md5: e8a0c794629cd23447808471fa03433a
+      size: 179026
     - path: reports/classification_report_latest.txt
       hash: md5
-      md5: 680937252c280421772a09413c00acda
-      size: 732
+      md5: 451a210f9b4af012a985083e6ec2a4d2
+      size: 673

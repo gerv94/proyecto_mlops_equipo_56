@@ -11,10 +11,11 @@
       - data/interim/student_interim_clean.csv:
           cache: false
   training:
-    cmd: python train/train_model_sre.py
+    cmd: python -m train.train_model_sre
     deps:
       - train/train_model_sre.py
       - data/interim/student_interim_clean.csv
     outs:
       - reports/classification_report_latest.txt:
           cache: false
+      - models/best_gridsearch_amplio.joblib

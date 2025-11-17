@@ -760,8 +760,10 @@ class ModelsReport(ReportBase):
     
     def _load_results_from_mlflow(self, experiment_name: str = None, tracking_uri: str = None) -> Dict:
         """Carga resultados de experimentos desde MLflow."""
+        from mlops.mlflow_config import MLFLOW_TRACKING_URI
+        
         if tracking_uri is None:
-            tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "file:./mlruns")
+            tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", MLFLOW_TRACKING_URI)
         
         mlflow.set_tracking_uri(tracking_uri)
         

@@ -5,13 +5,14 @@ from typing import Optional
 import mlflow
 import pandas as pd
 from mlflow.tracking import MlflowClient
+from mlops.mlflow_config import get_mlflow_client, MLFLOW_TRACKING_URI
 
 
 @dataclass
 class ModelPredictorConfig:
     """Configuration required to resolve and evaluate the trained model."""
 
-    tracking_uri: str = "file:./mlruns"
+    tracking_uri: str = MLFLOW_TRACKING_URI
     experiment_name: str = "student_performance_experiment_fase2"
     preprocessed_features_path: str = "data/interim/student_interim_preprocessed.csv"
     clean_data_path: str = "data/interim/student_interim_clean.csv"
@@ -24,7 +25,7 @@ class ModelPredictor:
     def __init__(self, config: Optional[ModelPredictorConfig] = None) -> None:
         self.config = config or ModelPredictorConfig()
         mlflow.set_tracking_uri(self.config.tracking_uri)
-        self.client = MlflowClient()
+        self.client = get_mlflow_client()
 
     def _resolve_latest_run_id(self) -> str:
         experiment = self.client.get_experiment_by_name(self.config.experiment_name)
