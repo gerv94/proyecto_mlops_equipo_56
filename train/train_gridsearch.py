@@ -102,11 +102,6 @@ class GridSearchTrainer:
         X = df.drop(columns=['Performance'])
         y = df['Performance']
         
-        # Eliminar columna 'mixed_type_col' si existe
-        if 'mixed_type_col' in X.columns:
-            X = X.drop(columns=['mixed_type_col'])
-            logging.info("Columna 'mixed_type_col' eliminada")
-        
         return X, y
 
     def encode_target(self, y: pd.Series) -> np.ndarray:

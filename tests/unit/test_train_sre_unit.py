@@ -119,22 +119,6 @@ class TestLoadData:
         assert "Performance" == y.name
         assert len(X) == len(y)
 
-    def test_load_data_removes_mixed_type_col(self, trainer, temp_data_dir):
-        """Test que load_data elimina mixed_type_col si existe."""
-        # Crear CSV con mixed_type_col
-        df = pd.DataFrame({
-            "Gender": ["M", "F"],
-            "Performance": ["good", "average"],
-            "mixed_type_col": [1, 2],
-        })
-        csv_path = temp_data_dir / "interim" / "student_interim_clean.csv"
-        df.to_csv(csv_path, index=False)
-        
-        trainer.data_path = csv_path
-        X, y = trainer.load_data()
-        
-        assert "mixed_type_col" not in X.columns
-
     def test_load_data_preserves_other_columns(self, trainer):
         """Test que load_data preserva otras columnas."""
         X, y = trainer.load_data()
