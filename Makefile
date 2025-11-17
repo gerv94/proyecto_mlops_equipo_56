@@ -16,17 +16,19 @@ VENV_NAME := .venv
 # ###############################################################################
 ifeq ($(OS),Windows_NT)
   EXE := .exe
-  VENV_BIN := $(VENV_NAME)/Scripts
+  SEP := \\
+  VENV_BIN := $(VENV_NAME)$(SEP)Scripts
 else
   EXE :=
-  VENV_BIN := $(VENV_NAME)/bin
+  SEP := /
+  VENV_BIN := $(VENV_NAME)$(SEP)bin
 endif
 
-PYTHON_INTERPRETER := $(VENV_BIN)/python$(EXE)
-PIP := $(VENV_BIN)/pip$(EXE)
-DVC := $(VENV_BIN)/dvc$(EXE)
-MLFLOW := $(VENV_BIN)/mlflow$(EXE)
-PYTEST := $(VENV_BIN)/pytest$(EXE)
+PYTHON_INTERPRETER := "$(VENV_BIN)$(SEP)python$(EXE)"
+PIP := "$(VENV_BIN)$(SEP)pip$(EXE)"
+DVC := "$(VENV_BIN)$(SEP)dvc$(EXE)"
+MLFLOW := "$(VENV_BIN)$(SEP)mlflow$(EXE)"
+PYTEST := "$(VENV_BIN)$(SEP)pytest$(EXE)"
 
 # ###############################################################################
 # COMMANDS                                                                      #
@@ -52,7 +54,7 @@ show_env: ## Show Python environment information
 # ###############################################################################
 # VIRTUAL ENV (no shell-specific -d checks)                                      #
 # ###############################################################################
-VENV_EXISTS := $(wildcard $(VENV_NAME)/)
+VENV_EXISTS := $(wildcard $(VENV_NAME)$(SEP))
 
 create_environment: ## Create Python virtual environment
 ifeq ($(VENV_EXISTS),)
