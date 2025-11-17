@@ -93,8 +93,8 @@ list: ## List all files in the project structure
 
 sync_data_down: .ensure_venv ## Pull data from DVC remote storage
 	@echo "Pulling data from DVC remote..."
-	@$(DVC) pull
-	@echo "Data synced from remote."
+	@$(DVC) pull || echo "Warning: Some files could not be pulled from remote, continuing anyway..."
+	@echo "Data sync attempted."
 
 sync_data_up: .ensure_venv ## Push data to DVC remote storage
 	@echo "Pushing data to DVC remote..."
