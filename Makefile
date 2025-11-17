@@ -149,15 +149,15 @@ api: .ensure_venv ## Start FastAPI endpoint (app_api.py) on http://127.0.0.1:800
 
 test: .ensure_venv ## Run full test suite (unit + integration)
 	@echo "Running full test suite (unit + integration)..."
-	@$(PYTEST) tests/ -v || echo "No tests found. Add tests in tests/ directory."
+	@$(PYTHON_INTERPRETER) scripts$(SEP)run_pytest.py tests/ -v || echo "No tests found. Add tests in tests/ directory."
 
 test-unit: .ensure_venv ## Run unit tests only
 	@echo "Running unit tests..."
-	@$(PYTEST) tests/unit -v || echo "No unit tests found in tests/unit."
+	@$(PYTHON_INTERPRETER) scripts$(SEP)run_pytest.py tests/unit -v || echo "No unit tests found in tests/unit."
 
 test-integration: .ensure_venv ## Run integration tests only
 	@echo "Running integration tests..."
-	@$(PYTEST) tests/integration -v || echo "No integration tests found in tests/integration."
+	@$(PYTHON_INTERPRETER) scripts$(SEP)run_pytest.py tests/integration -v || echo "No integration tests found in tests/integration."
 
 lint: ## Run code quality checks (placeholder)
 	@echo "Running linters..."
