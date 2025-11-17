@@ -106,40 +106,33 @@ preprocessor = ColumnTransformer(
 # Exploraremos valores alrededor de estos parámetros
 
 param_grid = {
-    # Explorar número de árboles con pasos pequeños alrededor de 20
-    'classifier__n_estimators': [10, 15, 18, 20, 22, 25, 30, 35],  # 8 valores (pasos de 2-5)
-    
-    # Explorar profundidad con pasos pequeños alrededor de 20
-    'classifier__max_depth': [15, 18, 20, 22, 25, 28],  # 6 valores (pasos de 2-3)
-    
-    # Explorar min_samples_split con pasos pequeños alrededor de 15
-    'classifier__min_samples_split': [8, 10, 12, 15, 18, 20],  # 6 valores (pasos de 2-3)
-    
-    # Explorar min_samples_leaf con más granularidad
-    'classifier__min_samples_leaf': [1, 2, 3],  # 3 valores
-    
-    # Explorar max_features con más opciones
-    'classifier__max_features': ['sqrt', 'log2', 0.6, 0.8],  # 4 valores
-    
-    # Criterio de split (ambos para comparar)
-    'classifier__criterion': ['gini', 'entropy'],  # 2 valores
-    
-    # Class weight (sin balanced para acelerar)
-    'classifier__class_weight': [None]  # 1 valor (el actual exitoso)
+    # Explorar valores MUY cercanos al modelo base exitoso
+    'classifier__n_estimators': [18, 20, 22, 25],  # 4 valores cerca de 20
+    'classifier__max_depth': [18, 20, 22],  # 3 valores cerca de 20
+    'classifier__min_samples_split': [12, 15, 18],  # 3 valores cerca de 15
+    'classifier__min_samples_leaf': [1, 2],  # 2 valores
+    'classifier__max_features': ['sqrt', 'log2'],  # 2 valores
+    'classifier__criterion': ['gini'],  # 1 valor (el exitoso)
+    'classifier__class_weight': [None]  # 1 valor (el exitoso)
 }
 
 total_combinations = np.prod([len(v) for v in param_grid.values()])
 logging.info(f"Grilla definida con {total_combinations} combinaciones")
 
 print("\n" + "="*70)
-print("GRID SEARCH GRANULAR - OPTIMIZACIÓN FINA DE HIPERPARÁMETROS")
+print("GRID SEARCH FINO - BÚSQUEDA CERCANA AL MODELO BASE")
 print("="*70)
 print(f"Modelo base: n_estimators=20, max_depth=20, min_samples_split=15")
-print(f"Random state modelo: 888 (igual que el modelo actual exitoso)")
-print(f"Total de combinaciones: {total_combinations}")
-print(f"Tiempo estimado: ~30-40 minutos")
-print(f"CV folds: 3 (reducido para acelerar)")
-print(f"Estrategia: Pasos pequeños alrededor de parámetros exitosos")
+print(f"Random state modelo: 888")
+print(f"\nRangos de búsqueda:")
+print(f"  n_estimators: [18, 20, 22, 25]")
+print(f"  max_depth: [18, 20, 22]")
+print(f"  min_samples_split: [12, 15, 18]")
+print(f"  min_samples_leaf: [1, 2]")
+print(f"  max_features: ['sqrt', 'log2']")
+print(f"\nTotal de combinaciones: {total_combinations}")
+print(f"Tiempo estimado: ~15-20 minutos")
+print(f"CV folds: 5")
 print(f"Métrica principal: f1_weighted")
 print(f"Preprocessing: OneHotEncoder (remainder='drop')")
 print("="*70 + "\n")
@@ -166,7 +159,7 @@ grid_search = GridSearchCV(
     param_grid=param_grid,
     scoring=scoring,
     refit='f1_weighted',
-    cv=3,  # Reducido de 5 a 3 para acelerar (~40% más rápido)
+    cv=5,  # CV=5 como el modelo original
     verbose=2,
     n_jobs=-1,
     return_train_score=True
