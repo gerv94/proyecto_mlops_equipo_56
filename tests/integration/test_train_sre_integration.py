@@ -283,9 +283,21 @@ class TestFullTrainingFlow:
     @patch("train.train_model_sre.mlflow")
     def test_run_method_executes_all_steps(self, mock_mlflow, trainer):
         """Test que el método run() ejecuta todos los pasos."""
-        # Mock MLflow start_run
+        # Mock completo de MLflow para evitar crear experimentos reales
         mock_run = MagicMock()
         mock_mlflow.start_run.return_value.__enter__.return_value = mock_run
+        mock_mlflow.start_run.return_value.__exit__.return_value = None
+        
+        # Mock de sklearn.log_model para evitar guardar modelos reales
+        mock_mlflow.sklearn = MagicMock()
+        mock_mlflow.sklearn.log_model = MagicMock()
+        mock_mlflow.models.signature = MagicMock()
+        mock_mlflow.models.signature.infer_signature = MagicMock(return_value=MagicMock())
+        
+        # Mock de log_params, log_metrics, log_artifact
+        mock_mlflow.log_params = MagicMock()
+        mock_mlflow.log_metrics = MagicMock()
+        mock_mlflow.log_artifact = MagicMock()
         
         # Ejecutar run (esto puede tomar tiempo, pero verifica el flujo)
         # Nota: En un entorno real, podrías querer mockear más cosas
@@ -296,7 +308,7 @@ class TestFullTrainingFlow:
             # Solo verificamos que los métodos se llaman
             pass
         
-        # Verificar que MLflow fue configurado
+        # Verificar que MLflow fue configurado (pero no creó experimentos reales)
         mock_mlflow.set_tracking_uri.assert_called()
         mock_mlflow.set_experiment.assert_called()
 
