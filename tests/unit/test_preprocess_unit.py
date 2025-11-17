@@ -124,6 +124,44 @@ class TestMakeCleanInterim:
         assert isinstance(output_path, str)
         assert Path(output_path).exists()
 
+    def test_removes_mixed_type_col(self, temp_data_dir):
+        """make_clean_interim() elimina la columna 'mixed_type_col' si existe."""
+        # Crear DataFrame con mixed_type_col
+        df = pd.DataFrame({
+            "numeric_col": [1, 2, 3, 4, 5],
+            "categorical_col": ["A", "B", "C", "A", "B"],
+            "mixed_type_col": [1, 2, 3, 4, 5],  # Columna que debe eliminarse
+            "target": ["Low", "Medium", "High", "Low", "Medium"],
+        })
+        
+        # Crear estructura de directorios
+        raw_dir = temp_data_dir / "raw"
+        interim_dir = temp_data_dir / "interim"
+        raw_dir.mkdir(parents=True)
+        interim_dir.mkdir(parents=True)
+        
+        # Guardar en modified.csv
+        modified_csv = raw_dir / "student_entry_performance_modified.csv"
+        df.to_csv(modified_csv, index=False)
+        
+        # Crear pipeline con el repositorio mock
+        repo = DatasetRepository(
+            modified_csv=modified_csv,
+            interim_dir=interim_dir,
+        )
+        pipeline = PreprocessPipeline(dataset_repository=repo)
+        
+        # Ejecutar make_clean_interim
+        output_path = pipeline.make_clean_interim()
+        cleaned_df = pd.read_csv(output_path)
+        
+        # Verificar que mixed_type_col fue eliminada
+        assert "mixed_type_col" not in cleaned_df.columns
+        # Verificar que otras columnas se preservaron
+        assert "numeric_col" in cleaned_df.columns
+        assert "categorical_col" in cleaned_df.columns
+        assert "target" in cleaned_df.columns
+
 
 # ============================================================
 # Tests para PreprocessPipeline.run_all()

@@ -32,6 +32,7 @@ class PreprocessPipeline:
         - Loads the modified dataset.
         - Applies basic typing to coerce numeric columns.
         - Normalises categorical text values.
+        - Removes 'mixed_type_col' if it exists (generated during cleaning).
         - Saves the cleaned dataset under ``data/interim``.
         """
 
@@ -42,6 +43,10 @@ class PreprocessPipeline:
         cleaned_dataframe = self.feature_engineer.clean_categoricals(
             typed_dataframe, categorical_columns
         )
+
+        # Eliminar columna 'mixed_type_col' si existe (generada durante limpieza)
+        if "mixed_type_col" in cleaned_dataframe.columns:
+            cleaned_dataframe = cleaned_dataframe.drop(columns=["mixed_type_col"])
 
         output_path = self.dataset_repository.save_interim(
             cleaned_dataframe, "student_interim_clean.csv"
