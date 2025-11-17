@@ -19,6 +19,11 @@ import os
 import mlflow
 import mlflow.sklearn
 
+# MLflow (fallback loader)
+import mlflow
+import mlflow.sklearn
+from mlflow.tracking import MlflowClient
+
 # Configuración de logging
 logging.basicConfig(
     level=logging.INFO,
@@ -46,15 +51,107 @@ app = FastAPI(
 
 MODEL_PATH = Path("models/best_gridsearch_amplio.joblib")
 
-try:
-    model = joblib.load(MODEL_PATH)
-    logger.info(f"Modelo cargado exitosamente desde {MODEL_PATH}")
-except FileNotFoundError:
-    logger.error(f"Modelo no encontrado en {MODEL_PATH}")
-    model = None
-except Exception as e:
-    logger.error(f"Error al cargar el modelo: {str(e)}")
-    model = None
+
+def _try_load_local_joblib(path: Path):
+    try:
+        m = joblib.load(path)
+        logger.info(f"Modelo cargado exitosamente desde {path}")
+        return m
+    except FileNotFoundError:
+        logger.error(f"Modelo no encontrado en {path}")
+        return None
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Error al cargar el modelo local: {str(exc)}")
+        return None
+
+
+def _resolve_latest_mlflow_model_uri() -> str | None:
+    """Busca el último run en experimentos conocidos y localiza el subpath del modelo.
+    Retorna una URI de MLflow si lo encuentra, de lo contrario None.
+    """
+    mlflow.set_tracking_uri("file:./mlruns")
+    client = MlflowClient()
+
+    def _find_model_artifact_subpath(run_id: str) -> str | None:
+        """Find a valid model artifact subpath for a given run.
+
+        It first tries common artifact names (best_model, student_model, etc.)
+        and only accepts a candidate if it actually contains an ``MLmodel`` file.
+        If none match, it scans first-level directories to find any folder
+        that contains an ``MLmodel`` file.
+        """
+        candidate_names = ["best_model", "student_model", "model", "sklearn-model"]
+
+        # First, try common artifact names
+        for artifact_name in candidate_names:
+            try:
+                artifact_items = client.list_artifacts(run_id, artifact_name)
+            except Exception:  # noqa: BLE001
+                continue
+
+            if any(Path(artifact_item.path).name == "MLmodel" for artifact_item in artifact_items):
+                return artifact_name
+
+        # Fallback: scan first-level directories for a folder with MLmodel
+        try:
+            root_items = client.list_artifacts(run_id)
+        except Exception:  # noqa: BLE001
+            return None
+
+        for root_item in root_items:
+            if not root_item.is_dir:
+                continue
+            try:
+                inner_items = client.list_artifacts(run_id, root_item.path)
+            except Exception:  # noqa: BLE001
+                continue
+
+            if any(Path(inner_item.path).name == "MLmodel" for inner_item in inner_items):
+                return root_item.path
+
+        return None
+
+    experiments = [
+        "student_performance_gridsearch_amplio",
+        "student_performance_experiment_fase2",
+    ]
+    for exp_name in experiments:
+        exp = client.get_experiment_by_name(exp_name)
+        if not exp:
+            continue
+        runs = client.search_runs(
+            experiment_ids=[exp.experiment_id],
+            order_by=["attributes.end_time DESC"],
+            max_results=5,
+        )
+        for run in runs:
+            sub = _find_model_artifact_subpath(run.info.run_id)
+            if sub:
+                return f"runs:/{run.info.run_id}/{sub}"
+    return None
+
+
+def _try_load_mlflow_model():
+    uri = _resolve_latest_mlflow_model_uri()
+    if not uri:
+        logger.error("No se encontró un modelo en MLflow para cargar como fallback.")
+        return None
+    try:
+        m = mlflow.sklearn.load_model(uri)
+        logger.info(f"Modelo cargado desde MLflow: {uri}")
+        return m
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Error al cargar modelo desde MLflow ({uri}): {str(exc)}")
+        return None
+
+
+# Intento 1: cargar .joblib local (DVC)
+model = _try_load_local_joblib(MODEL_PATH)
+# Intento 2: fallback a MLflow si no existe
+if model is None:
+    model = _try_load_mlflow_model()
+    if model is None:
+        logger.error("No se pudo cargar ningún modelo. Considere ejecutar 'make sync_data_down' o entrenar el modelo.")
 
 # Clases de predicción (en orden alfabético según LabelEncoder)
 CLASS_NAMES = ['average', 'excellent', 'good', 'none', 'vg']

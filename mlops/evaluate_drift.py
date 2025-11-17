@@ -56,6 +56,9 @@ def evaluate_drift():
     y_pred_baseline = model.predict(X_baseline)
     y_pred_drift = model.predict(X_drift)
     
+    # NOTA: Ya no necesitamos filtrar 'none' porque los datos fueron limpiados en origen
+    # El dataset ya no contiene registros con Performance='none'
+    
     # Métricas
     acc_baseline = accuracy_score(y_baseline_encoded, y_pred_baseline)
     acc_drift = accuracy_score(y_drift_encoded, y_pred_drift)
@@ -87,6 +90,7 @@ REPORTE DE EVALUACIÓN DE DRIFT
 =================================================================
 
 CLASES DEL MODELO: {', '.join(label_encoder.classes_)}
+NOTA: Dataset limpio sin registros 'none'
 
 MÉTRICAS BASELINE:
   - Accuracy: {acc_baseline:.4f}
@@ -119,7 +123,7 @@ PSI POR FEATURE (Population Stability Index):
     
     logger.info(report)
     
-    with open("reports/drift/drift_evaluation_report.txt", "w") as f:
+    with open("reports/drift/drift_evaluation_report.txt", "w", encoding="utf-8") as f:
         f.write(report)
     
     # Visualizaciones

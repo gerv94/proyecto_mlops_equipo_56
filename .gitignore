@@ -34,40 +34,37 @@ Thumbs.db
 # ARTEFACTOS Y SALIDAS DE ENTRENAMIENTO
 # =====================================================
 
-# Directorios de modelos y resultados
+# Ignorar modelos salvo archivos .dvc
 models/
-#mlruns/
+!models/*.dvc
+!models/**/.gitkeep
+
+# Otros directorios de artefactos
 outputs/
 logs/
 runs/
 checkpoints/
 
-# Permitir mantener estructura vacía
-!models/.gitkeep
+# Mantener estructura vacía
 !reports/.gitkeep
 
 # =====================================================
 # DATOS INTERMEDIOS Y CRUDOS
 # =====================================================
 
-# 1. NO ignora el directorio data/raw en sí, para que las excepciones funcionen.
-#    Solo ignoramos todos los archivos y subdirectorios dentro de él.
-#    Importante: una regla por línea. Usa recursivo para cubrir todos los niveles.
-
+# 1. Ignorar todo dentro de data/raw/
 data/raw/**
 
-# 2. Excepción: ¡Permitir los punteros DVC! (Sobrescribe la regla anterior)
+# 2. Permitir punteros DVC
 !data/raw/*.dvc
 
-# 3. Excepción: Permitir la documentación (README)
+# 3. Permitir documentación
 !data/raw/README.md
-
 
 # =====================================================
 # REPORTES Y DOCUMENTACIÓN
 # =====================================================
 
-# Incluir markdowns y reportes
 !docs/
 !reports/
 !*.md
@@ -77,7 +74,6 @@ data/raw/**
 # ARCHIVOS DE CONFIGURACIÓN DE ENTORNO
 # =====================================================
 
-# Excluir secretos, tokens o configuraciones locales
 *.env
 *.json
 *.yaml
@@ -88,20 +84,23 @@ data/raw/**
 # OTROS
 # =====================================================
 
-# Backups y archivos temporales
 *.bak
 *.tmp
 *.swp
 *.old
 
-# ================================
-# DVC exceptions (allow metadata)
-# ================================
+# =====================================================
+# DVC EXCEPTIONS (allow metadata)
+# =====================================================
+
 !*.dvc
 !.dvc/
 !dvc.yaml
 !dvc.lock
 
-.idea
-/models
+# =====================================================
+# EDITORES Y LOGS
+# =====================================================
+
+.idea/
 mlflow.log
