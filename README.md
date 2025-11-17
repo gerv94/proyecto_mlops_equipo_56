@@ -15,13 +15,26 @@ El objetivo es analizar y modelar el dataset *Student Performance on an Entrance
 
 ## 1. Manipulación y preparación de datos
 
-La etapa de preparación de datos se realiza ahora como preprocesamiento productivo real separado del EDA.
-Este proceso se encuentra implementado en **mlops/preprocess.py** y es ejecutado automáticamente por el pipeline de DVC mediante **mlops/run_preprocess.py**.
+La preparación de datos fue implementada mediante un flujo reproducible basado en los módulos mlops/dataset.py, mlops/features.py y mlops/preprocess.py.
+El análisis exploratorio (EDA) fue separado del preprocesamiento productivo, garantizando que las transformaciones usadas durante el entrenamiento sean siempre consistentes.
 
-Aquí se tipifican columnas, se normalizan categóricas (limpieza de texto) y se aplica preprocesamiento para entrenamiento (One-Hot Encoding sin PCA ni escalado, alineado con el pipeline de entrenamiento).
-Este flujo es el que alimenta directamente la fase de entrenamiento y asegura reproducibilidad en cualquier entorno.
+El flujo consiste en dos etapas:
+	1.	Limpieza y tipificación (student_interim_clean.csv)
+	•	Detección automática de columnas numéricas y categóricas.
+	•	Normalización de texto en variables categóricas.
+	•	Conversión de tipos y coerción de valores.
+	•	Imputación mínima (mediana / moda).
+	2.	Preprocesamiento avanzado (student_interim_preprocessed.csv)
+	•	Escalado de numéricas (StandardScaler).
+	•	Codificación One-Hot de categóricas con handle_unknown="ignore".
+	•	Agregación opcional de componentes principales (PCA).
 
-Los datasets intermedios generados por este preprocesamiento se guardan automáticamente en data/interim/ y son consumidos después por el proceso de entrenamiento del modelo.
+Estos artefactos se guardan en data/interim/ y son consumidos directamente por la etapa de entrenamiento.
+El pipeline completo se ejecuta con:
+
+```bash
+dvc repro
+```
 
 ---
 
@@ -121,6 +134,12 @@ El script realiza las siguientes tareas:
 | Recall (weighted) | 0.99 |
 | F1-score (weighted) | 0.99 |
 
+El entrenamiento consume directamente los artefactos generados en la etapa de preprocesamiento:
+	•	data/interim/student_interim_clean.csv
+	•	data/interim/student_interim_preprocessed.csv
+
+Esto garantiza que el modelo siempre se entrene con los mismos datos transformados de forma determinística, manteniendo la reproducibilidad del pipeline.
+
 ---
 
 ## 4. Seguimiento de experimentos con MLflow
@@ -155,11 +174,10 @@ dvc.yaml
 │   │     - mlops/features.py
 │   │     - mlops/preprocess.py
 │   │     - mlops/run_preprocess.py
-│   │     - data/raw/
 │   │   outs:
 │   │     - data/interim/student_interim_clean.csv
 │   │     - data/interim/student_interim_preprocessed.csv
-│   │   cmd: python -m mlops.run_preprocess
+│   │   cmd: python mlops/run_preprocess.py
 │   │
 │   └── training:
 │       deps:
@@ -171,6 +189,8 @@ dvc.yaml
 │       cmd: python train/train_model_sre.py
 
 ```
+
+El pipeline completo fue estandarizado mediante DVC, garantizando que los datos limpios, los datos procesados y el modelo final puedan regenerarse desde cero con un solo comando.
 
 ### Ejecución del pipeline
 
@@ -256,7 +276,29 @@ proyecto_mlops_equipo_56/
 
 ---
 
-## 8. Tecnologías y librerías clave
+## 8. Columnas numéricas, categóricas y objetivo
+
+A continuación se presentan las columnas detectadas automáticamente por el módulo de Data Engineering, clasificadas con base en tipo y cardinalidad:
+
+| Columna                 | Tipo        | Descripción |
+|------------------------|-------------|-------------|
+| **Performance**        | Target      | Variable objetivo del modelo. |
+| Mother_occupation      | Categórica  | Ocupación de la madre. |
+| Father_occupation      | Categórica  | Ocupación del padre. |
+| Gender                 | Categórica  | Género del estudiante. |
+| Caste                  | Categórica  | Grupo social asociado al estudiante. |
+| medium                 | Categórica  | Medio o idioma de instrucción. |
+| coaching               | Categórica  | Participación en programas de coaching. |
+| Class_ten_education    | Categórica  | Nivel educativo previo (10°). |
+| Class_XII_Percentage   | Categórica* | Porcentaje de calificaciones en 12°. |
+| Class_ X_Percentage    | Categórica* | Porcentaje de calificaciones en 10°. |
+| twelve_education       | Categórica  | Educación previa en 12°. |
+| time                   | Categórica  | Tiempo dedicado al estudio. |
+| mixed_type_col         | Categórica  | Columna detectada como híbrida; convertida a categórica. |
+
+Estas columnas se clasificaron como categóricas debido a su cardinalidad y formato textual, aun cuando representan porcentajes.
+
+## 9. Tecnologías y librerías clave
 
 | Categoría | Herramientas |
 |------------|--------------|
@@ -270,11 +312,11 @@ proyecto_mlops_equipo_56/
 
 ---
 
-## 9. Pruebas unitarias y de integración
+## 10. Pruebas unitarias y de integración
 
 El proyecto incluye pruebas automatizadas para validar componentes críticos y asegurar la estabilidad del sistema.
 
-### 9.1 Ejecución de pruebas
+### 10.1 Ejecución de pruebas
 
 **⚠️ Importante:** Asegúrate de usar el pytest del entorno virtual `.venv` para garantizar que uses las dependencias correctas del proyecto.
 
@@ -327,7 +369,7 @@ pytest tests/test_reports.py
 make test
 ```
 
-### 9.2 Estructura de pruebas
+### 10.2 Estructura de pruebas
 
 ```
 tests/
@@ -336,7 +378,7 @@ tests/
 └── (futuros: test_features.py, test_preprocess.py, etc.)
 ```
 
-### 9.3 Cobertura de pruebas
+### 10.3 Cobertura de pruebas
 
 Actualmente el proyecto incluye pruebas para:
 - **Módulo de reportes** (`mlops/reports.py`):
@@ -345,7 +387,7 @@ Actualmente el proyecto incluye pruebas para:
   - Función factory `create_report`
   - Flujos de generación de reportes HTML
 
-### 9.4 Agregar nuevas pruebas
+### 10.4 Agregar nuevas pruebas
 
 Para agregar nuevas pruebas:
 1. Crea un archivo `tests/test_<modulo>.py`
@@ -366,7 +408,7 @@ def test_guess_target():
 
 ---
 
-## 10. Control de versiones y convenciones de commits
+## 11. Control de versiones y convenciones de commits
 
 El versionado de código se gestiona en GitHub bajo el repositorio:
 
@@ -386,11 +428,11 @@ PIPELINE: integración DVC y MLflow
 
 ---
 
-## 11. Documentación técnica
+## 12. Documentación técnica
 
 El proyecto cuenta con documentación técnica comprehensiva en `/docs/`:
 
-### 11.1 Informe SRE
+### 12.1 Informe SRE
 ```
 /docs/informe_sre_fase2.md
 ```
@@ -401,7 +443,7 @@ Incluye:
 - Resultados y métricas de desempeño del modelo.  
 - Conclusiones del Ingeniero de Confiabilidad (SRE).
 
-### 11.2 Reporte de Comparación de Modelos
+### 12.2 Reporte de Comparación de Modelos
 ```
 /docs/model_comparison_report.md
 ```
@@ -411,7 +453,7 @@ Incluye:
 - Justificación de la selección del mejor modelo.
 - Conclusiones y lecciones aprendidas del Data Scientist.
 
-### 11.3 Diagrama de Arquitectura
+### 12.3 Diagrama de Arquitectura
 ```
 /docs/architecture_diagram.md
 ```
@@ -422,7 +464,7 @@ Incluye:
 - Responsabilidades por rol del equipo.
 - Decisiones de arquitectura y mejoras futuras.
 
-### 11.4 Control de Versión de Datos
+### 12.4 Control de Versión de Datos
 ```
 /docs/DATA_VERSION_CONTROL.md
 ```
@@ -430,12 +472,3 @@ Incluye:
 - Trazabilidad de transformaciones de datos.
 - Versionado de datasets con DVC.
 - Ejecuciones y resultados del pipeline.
-
----
-
-## 11. Próximos pasos – Fase 3
-
-- Integrar orquestación con **DVC pipelines** o **MLflow Projects**.  
-- Implementar despliegue del modelo como API (FastAPI / Docker).  
-- Automatizar evaluación continua (CI/CD).  
-- Monitorear métricas en tiempo real (Prometheus / Grafana).
