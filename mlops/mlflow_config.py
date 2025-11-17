@@ -13,13 +13,25 @@ import mlflow
 # CONFIGURATION CONSTANTS
 # ============================================================
 
-# MLflow tracking URI (can be overridden by MLFLOW_TRACKING_URI env var)
-MLFLOW_TRACKING_URI = os.environ.get("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
+# Host/port provided by Makefile (server side). If tracking URI is not given,
+# we derive it from these values for local client connections.
+_MLFLOW_PORT = os.environ.get("MLFLOW_PORT", "5000")
+_MLFLOW_HOST = os.environ.get("MLFLOW_HOST", "127.0.0.1")
+# When server binds to 0.0.0.0, clients should connect using 127.0.0.1
+_HOST_FOR_URL = "127.0.0.1" if _MLFLOW_HOST in ("0.0.0.0", "::") else _MLFLOW_HOST
 
-# S3 artifact root for MLflow (can be overridden by MLFLOW_S3_ARTIFACT_ROOT env var)
-MLFLOW_S3_ARTIFACT_ROOT = os.environ.get(
-    "MLFLOW_S3_ARTIFACT_ROOT",
-    "s3://itesm-mna/202502-equipo56/mlflow"
+# MLflow tracking URI: prefer explicit MLFLOW_TRACKING_URI, otherwise build from host/port
+MLFLOW_TRACKING_URI = os.environ.get(
+    "MLFLOW_TRACKING_URI",
+    f"http://{_HOST_FOR_URL}:{_MLFLOW_PORT}"
+)
+
+# Artifact root: accept MLFLOW_ARTIFACT_ROOT (aligns with Makefile),
+# fallback to legacy MLFLOW_S3_ARTIFACT_ROOT name, then default
+MLFLOW_ARTIFACT_ROOT = (
+    os.environ.get("MLFLOW_ARTIFACT_ROOT")
+    or os.environ.get("MLFLOW_S3_ARTIFACT_ROOT")
+    or "s3://itesm-mna/202502-equipo56/mlflow"
 )
 
 # AWS configuration
@@ -75,6 +87,7 @@ def setup_mlflow(experiment_name: str, run_name: Optional[str] = None) -> None:
     # Set MLflow tracking URI
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
     logger.info(f"MLflow tracking URI: {MLFLOW_TRACKING_URI}")
+    logger.debug(f"MLflow artifact root (server-side): {MLFLOW_ARTIFACT_ROOT}")
     
     # Set or create experiment
     mlflow.set_experiment(experiment_name)
