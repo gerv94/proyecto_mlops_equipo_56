@@ -127,8 +127,10 @@ class ReportsRunner:
             print("-" * 80)
 
             try:
+                from mlops.mlflow_config import MLFLOW_TRACKING_URI
+                
                 tracking_uri = args.mlflow_tracking_uri or os.environ.get(
-                    "MLFLOW_TRACKING_URI", "file:./mlruns"
+                    "MLFLOW_TRACKING_URI", MLFLOW_TRACKING_URI
                 )
                 mlflow.set_tracking_uri(tracking_uri)
 

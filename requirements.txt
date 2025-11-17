@@ -32,6 +32,8 @@ mlflow==3.5.1
 cloudpickle==3.1.0
 pyarrow==18.1.0
 dvc[S3]==3.55.2
+boto3>=1.35.0
+s3fs>=2024.0.0
 
 # ------------------------
 # UTILITIES & ENVIRONMENT

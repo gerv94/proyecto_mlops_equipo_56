@@ -23,6 +23,7 @@ import mlflow.sklearn
 import mlflow
 import mlflow.sklearn
 from mlflow.tracking import MlflowClient
+from mlops.mlflow_config import get_mlflow_client, MLFLOW_TRACKING_URI
 
 # Configuración de logging
 logging.basicConfig(
@@ -69,8 +70,8 @@ def _resolve_latest_mlflow_model_uri() -> str | None:
     """Busca el último run en experimentos conocidos y localiza el subpath del modelo.
     Retorna una URI de MLflow si lo encuentra, de lo contrario None.
     """
-    mlflow.set_tracking_uri("file:./mlruns")
-    client = MlflowClient()
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    client = get_mlflow_client()
 
     def _find_model_artifact_subpath(run_id: str) -> str | None:
         """Find a valid model artifact subpath for a given run.

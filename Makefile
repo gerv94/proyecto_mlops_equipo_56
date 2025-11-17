@@ -32,6 +32,13 @@ DVC := $(VENV_BIN)$(SEP)dvc$(EXE)
 MLFLOW := $(VENV_BIN)$(SEP)mlflow$(EXE)
 PYTEST := $(VENV_BIN)$(SEP)pytest$(EXE)
 
+# MLflow server configuration (overridable)
+MLFLOW_PORT ?= 5000
+MLFLOW_HOST ?= 0.0.0.0
+MLFLOW_BACKEND_URI ?= sqlite:///mlflow.db
+MLFLOW_ARTIFACT_ROOT ?= s3://itesm-mna/202502-equipo56/mlflow
+MLFLOW_LOG ?= mlflow.log
+
 # ###############################################################################
 # COMMANDS                                                                      #
 # ###############################################################################
@@ -136,10 +143,17 @@ train_enhanced: .ensure_venv ## Train enhanced models
 	@$(PYTHON_INTERPRETER) -m train.train_enhanced_models
 	@echo "Enhanced models training complete."
 
-mlflow: .ensure_venv ## Start MLflow UI server
-	@echo "Starting MLflow UI at http://127.0.0.1:5001"
-	@echo "Logs will be written to mlflow.log"
-	@$(MLFLOW) ui --host 127.0.0.1 --port 5001 2>&1 | tee mlflow.log
+mlflow: .ensure_venv ## Start MLflow tracking server (use MLFLOW_PORT to change port)
+	@echo "Iniciando servidor MLflow en http://127.0.0.1:$(MLFLOW_PORT)"
+	@echo "Artefactos: $(MLFLOW_ARTIFACT_ROOT)"
+	@echo "Logs: $(MLFLOW_LOG)"
+	@echo "Presiona Ctrl+C para detener el servidor"
+	@$(MLFLOW) server \
+		--backend-store-uri $(MLFLOW_BACKEND_URI) \
+		--default-artifact-root $(MLFLOW_ARTIFACT_ROOT) \
+		--host $(MLFLOW_HOST) \
+		--port $(MLFLOW_PORT) \
+		2>&1 | tee $(MLFLOW_LOG)
 
 predict: .ensure_venv ## Run model prediction over current preprocessed data
 	@echo "Running prediction..."

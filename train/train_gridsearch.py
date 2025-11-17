@@ -23,6 +23,7 @@ from sklearn.metrics import (
 import mlflow
 import mlflow.sklearn
 import joblib
+from mlops.mlflow_config import setup_mlflow
 
 # ============================================================
 # CONFIGURACIÓN GENERAL
@@ -53,7 +54,6 @@ class GridSearchTrainer:
         data_path: str = "data/interim/student_interim_clean.csv",
         models_dir: str = "models",
         reports_dir: str = "reports",
-        mlflow_tracking_uri: str = "file:./mlruns",
         mlflow_experiment: str = "student_performance_gridsearch_amplio",
         model_random_state: int = 888,
         cv_folds: int = 5,
@@ -64,7 +64,6 @@ class GridSearchTrainer:
         self.data_path = Path(data_path)
         self.models_dir = Path(models_dir)
         self.reports_dir = Path(reports_dir)
-        self.mlflow_tracking_uri = mlflow_tracking_uri
         self.mlflow_experiment = mlflow_experiment
         self.model_random_state = model_random_state
         self.cv_folds = cv_folds
@@ -83,8 +82,7 @@ class GridSearchTrainer:
 
     def _setup_mlflow(self) -> None:
         """Configure MLflow tracking."""
-        mlflow.set_tracking_uri(self.mlflow_tracking_uri)
-        mlflow.set_experiment(self.mlflow_experiment)
+        setup_mlflow(self.mlflow_experiment)
         logging.info("Tracking MLflow configurado para Grid Search Amplio.")
 
     def load_data(self) -> Tuple[pd.DataFrame, pd.Series]:
