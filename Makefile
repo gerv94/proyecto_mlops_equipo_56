@@ -130,6 +130,10 @@ predict: .ensure_venv ## Run model prediction over current preprocessed data
 	@echo "Running prediction..."
 	@PYTHONPATH=. $(PYTHON_INTERPRETER) predict.py
 
+api: .ensure_venv ## Start FastAPI endpoint (app_api.py) on http://127.0.0.1:8000
+	@echo "Starting FastAPI at http://127.0.0.1:8000"
+	@PYTHONPATH=. $(PYTHON_INTERPRETER) -m uvicorn app_api:app --host 127.0.0.1 --port 8000 --reload
+
 test: .ensure_venv ## Run full test suite (unit + integration)
 	@echo "Running full test suite (unit + integration)..."
 	@PYTHONPATH=. $(PYTEST) tests/ -v || echo "No tests found. Add tests in tests/ directory."

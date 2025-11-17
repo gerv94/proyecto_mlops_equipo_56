@@ -68,3 +68,10 @@ psutil==6.1.0     # para monitoreo de recursos
 # ------------------------
 pytest>=8.0.0
 pytest-cov>=4.1.0
+
+# ------------------------
+# API (FastAPI endpoint)
+# ------------------------
+fastapi==0.115.6
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
