@@ -1,0 +1,5 @@
+outs:
+- md5: 2cfcb25670bfaa271b5893c8200de93f
+  size: 220855
+  hash: md5
+  path: best_gridsearch_amplio.joblib
