@@ -126,6 +126,10 @@ mlflow: .ensure_venv ## Start MLflow UI server
 	@echo "Logs will be written to mlflow.log"
 	@$(MLFLOW) ui --host 127.0.0.1 --port 5001 2>&1 | tee mlflow.log
 
+predict: .ensure_venv ## Run model prediction over current preprocessed data
+	@echo "Running prediction..."
+	@PYTHONPATH=. $(PYTHON_INTERPRETER) predict.py
+
 test: .ensure_venv ## Run full test suite (unit + integration)
 	@echo "Running full test suite (unit + integration)..."
 	@PYTHONPATH=. $(PYTEST) tests/ -v || echo "No tests found. Add tests in tests/ directory."

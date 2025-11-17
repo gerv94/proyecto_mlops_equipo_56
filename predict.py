@@ -64,8 +64,7 @@ class ModelPredictor:
                     except Exception:
                         continue
 
-        assert artifact_subpath is not None,
-        "No encontré un artifact de modelo con archivo MLmodel en el run."
+        assert artifact_subpath is not None, "No encontré un artifact de modelo con archivo MLmodel en el run."
         return artifact_subpath
 
     def _load_model(self):

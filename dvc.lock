@@ -1,56 +1,47 @@
 schema: '2.0'
 stages:
   preprocessing:
-    cmd: PYTHONPATH=. python mlops/run_preprocess.py
+    cmd: python -m mlops.run_preprocess
     deps:
     - path: data/raw/
       hash: md5
-      md5: e64de1ad88e5ffe5e4cc3a298f741cd3.dir
-      size: 57818
-      nfiles: 1
+      md5: b2807cb4b1ef341629dc8ed4e38c454c.dir
+      size: 111584
+      nfiles: 3
     - path: mlops/dataset.py
       hash: md5
-      md5: 290d2dd653f730b1d57a64c64eed08c9
-      size: 2371
+      md5: 0afc6c2039ed0a9503a571db1c37b27a
+      size: 5295
     - path: mlops/features.py
       hash: md5
-      md5: 5d4ac15c2b9035d9e757f4da334e3efe
-      size: 3070
+      md5: 160b2a477f15dc3dc2667c7914899c59
+      size: 9433
     - path: mlops/preprocess.py
       hash: md5
-      md5: ee1d7d08aa03dec9aa59f2730c30046b
-      size: 1282
+      md5: 9b32481dc54d9fa75a5d68a864cfa73c
+      size: 2408
     - path: mlops/run_preprocess.py
       hash: md5
-      md5: 6d725c4234fc6512b185b4ff5053bdbc
-      size: 181
+      md5: d029d851310b533a8855e1085f35e61e
+      size: 865
     outs:
     - path: data/interim/student_interim_clean.csv
       hash: md5
       md5: 543d360ae22168dcca0348a5990b30be
       size: 57566
-    - path: data/interim/student_interim_preprocessed.csv
-      hash: md5
-      md5: 6ac857d76c8486747a6f5e56cc9eafb1
-      size: 1262559
   training:
-    cmd: PYTHONPATH=. python train/train_model_sre.py
+    cmd: python train/train_model_sre.py
     deps:
     - path: data/interim/student_interim_clean.csv
       hash: md5
       md5: 543d360ae22168dcca0348a5990b30be
       size: 57566
-    - path: data/interim/student_interim_preprocessed.csv
-      hash: md5
-      md5: 6ac857d76c8486747a6f5e56cc9eafb1
-      size: 1262559
     - path: train/train_model_sre.py
       hash: md5
-      md5: 79397fa6f180db1c8b0191dacaea505d
-      size: 6401
+      md5: 5f8d696d2ef976f6a7a3c33bf51a51ec
+      size: 12923
     outs:
-    - path: models
+    - path: reports/classification_report_latest.txt
       hash: md5
-      md5: ea687ac0ab08d83e8d5805ca7e175fcf.dir
-      size: 1137166
-      nfiles: 2
+      md5: 680937252c280421772a09413c00acda
+      size: 732

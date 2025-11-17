@@ -52,7 +52,9 @@ checkpoints/
 
 # 1. NO ignora el directorio data/raw en sí, para que las excepciones funcionen.
 #    Solo ignoramos todos los archivos y subdirectorios dentro de él.
-data/raw/* data/raw/**/*
+#    Importante: una regla por línea. Usa recursivo para cubrir todos los niveles.
+
+data/raw/**
 
 # 2. Excepción: ¡Permitir los punteros DVC! (Sobrescribe la regla anterior)
 !data/raw/*.dvc
