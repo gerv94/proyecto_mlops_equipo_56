@@ -18,17 +18,19 @@ ifeq ($(OS),Windows_NT)
   EXE := .exe
   SEP := \\
   VENV_BIN := $(VENV_NAME)$(SEP)Scripts
+  PYTHON_SYSTEM := py -3
 else
   EXE :=
   SEP := /
   VENV_BIN := $(VENV_NAME)$(SEP)bin
+  PYTHON_SYSTEM := python3
 endif
 
-PYTHON_INTERPRETER := "$(VENV_BIN)$(SEP)python$(EXE)"
-PIP := "$(VENV_BIN)$(SEP)pip$(EXE)"
-DVC := "$(VENV_BIN)$(SEP)dvc$(EXE)"
-MLFLOW := "$(VENV_BIN)$(SEP)mlflow$(EXE)"
-PYTEST := "$(VENV_BIN)$(SEP)pytest$(EXE)"
+PYTHON_INTERPRETER := $(VENV_BIN)$(SEP)python$(EXE)
+PIP := $(VENV_BIN)$(SEP)pip$(EXE)
+DVC := $(VENV_BIN)$(SEP)dvc$(EXE)
+MLFLOW := $(VENV_BIN)$(SEP)mlflow$(EXE)
+PYTEST := $(VENV_BIN)$(SEP)pytest$(EXE)
 
 # ###############################################################################
 # COMMANDS                                                                      #
@@ -39,8 +41,7 @@ PYTEST := "$(VENV_BIN)$(SEP)pytest$(EXE)"
 help: ## Show this help message
 	@echo "Available commands:"
 	@echo ""
-	-@python scripts/print_make_help.py $(MAKEFILE_LIST) || true
-	-@python3 scripts/print_make_help.py $(MAKEFILE_LIST) || true
+	-@$(PYTHON_SYSTEM) scripts/print_make_help.py $(MAKEFILE_LIST)
 	@echo ""
 
 show_env: ## Show Python environment information
@@ -72,8 +73,8 @@ endif
 requirements: .ensure_venv ## Install Python dependencies from requirements.txt
 	@echo "Installing requirements..."
 	@$(PIP) install --upgrade pip
-	@$(PIP) install --only-binary=:all: -r requirements.txt || \
-		$(PIP) install -r requirements.txt
+	-@$(PIP) install --only-binary=:all: -r requirements.txt
+	@$(PIP) install -r requirements.txt
 	@echo "Requirements installed successfully."
 
 clean-pyc: ## Delete all compiled Python files
@@ -125,12 +126,12 @@ train: .ensure_venv ## Train model using DVC pipeline
 
 train_multiple: .ensure_venv ## Train multiple models with comparison
 	@echo "Training multiple models..."
-	@PYTHONPATH=. $(PYTHON_INTERPRETER) train/train_multiple_models.py
+	@$(PYTHON_INTERPRETER) -m train.train_multiple_models
 	@echo "Multiple models training complete."
 
 train_enhanced: .ensure_venv ## Train enhanced models
 	@echo "Training enhanced models..."
-	@PYTHONPATH=. $(PYTHON_INTERPRETER) train/train_enhanced_models.py
+	@$(PYTHON_INTERPRETER) -m train.train_enhanced_models
 	@echo "Enhanced models training complete."
 
 mlflow: .ensure_venv ## Start MLflow UI server
@@ -140,23 +141,23 @@ mlflow: .ensure_venv ## Start MLflow UI server
 
 predict: .ensure_venv ## Run model prediction over current preprocessed data
 	@echo "Running prediction..."
-	@PYTHONPATH=. $(PYTHON_INTERPRETER) predict.py
+	@$(PYTHON_INTERPRETER) predict.py
 
 api: .ensure_venv ## Start FastAPI endpoint (app_api.py) on http://127.0.0.1:8000
 	@echo "Starting FastAPI at http://127.0.0.1:8000"
-	@PYTHONPATH=. $(PYTHON_INTERPRETER) -m uvicorn app_api:app --host 127.0.0.1 --port 8000 --reload
+	@$(PYTHON_INTERPRETER) -m uvicorn app_api:app --host 127.0.0.1 --port 8000 --reload
 
 test: .ensure_venv ## Run full test suite (unit + integration)
 	@echo "Running full test suite (unit + integration)..."
-	@PYTHONPATH=. $(PYTEST) tests/ -v || echo "No tests found. Add tests in tests/ directory."
+	@$(PYTEST) tests/ -v || echo "No tests found. Add tests in tests/ directory."
 
 test-unit: .ensure_venv ## Run unit tests only
 	@echo "Running unit tests..."
-	@PYTHONPATH=. $(PYTEST) tests/unit -v || echo "No unit tests found in tests/unit."
+	@$(PYTEST) tests/unit -v || echo "No unit tests found in tests/unit."
 
 test-integration: .ensure_venv ## Run integration tests only
 	@echo "Running integration tests..."
-	@PYTHONPATH=. $(PYTEST) tests/integration -v || echo "No integration tests found in tests/integration."
+	@$(PYTEST) tests/integration -v || echo "No integration tests found in tests/integration."
 
 lint: ## Run code quality checks (placeholder)
 	@echo "Running linters..."
