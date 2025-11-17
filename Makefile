@@ -38,14 +38,12 @@ PYTEST := $(VENV_BIN)$(SEP)pytest$(EXE)
 
 .DEFAULT_GOAL := help
 
-# Help discovery (AWK fallback if Python script is missing)
-HELP_SCRIPT := $(firstword $(wildcard scripts/print_make_help.py))
-HELP_CMD := $(if $(HELP_SCRIPT),$(PYTHON_SYSTEM) scripts$(SEP)print_make_help.py $(MAKEFILE_LIST),awk -F':.*##' '/^[A-Za-z0-9_\-]+:.*##/ { printf "  make %-20s %s\\n", $$1, $$2 }' $(MAKEFILE_LIST))
+.DEFAULT_GOAL := help
 
 help: ## Show this help message
 	@echo "Available commands:"
 	@echo ""
-	-@$(HELP_CMD)
+	-@$(PYTHON_SYSTEM) scripts$(SEP)print_make_help.py $(MAKEFILE_LIST)
 	@echo ""
 
 show_env: ## Show Python environment information
