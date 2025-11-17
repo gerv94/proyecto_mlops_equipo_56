@@ -246,9 +246,20 @@ class TestFullGridSearchFlow:
     @patch("train.train_gridsearch.mlflow")
     def test_run_method_setup(self, mock_mlflow, trainer):
         """Test que el método run() configura todo correctamente."""
-        # Mock MLflow start_run
+        # Mock completo de MLflow para evitar crear experimentos reales
         mock_run = MagicMock()
         mock_mlflow.start_run.return_value.__enter__.return_value = mock_run
+        mock_mlflow.start_run.return_value.__exit__.return_value = None
+        
+        # Mock de sklearn.log_model para evitar guardar modelos reales
+        mock_mlflow.sklearn = MagicMock()
+        mock_mlflow.sklearn.log_model = MagicMock()
+        
+        # Mock de log_params, log_metrics, log_artifact
+        mock_mlflow.log_params = MagicMock()
+        mock_mlflow.log_metrics = MagicMock()
+        mock_mlflow.log_artifact = MagicMock()
+        mock_mlflow.set_tag = MagicMock()
         
         # Mock grid_search.fit para evitar ejecución larga
         with patch.object(trainer, "run_grid_search") as mock_fit:
@@ -263,7 +274,7 @@ class TestFullGridSearchFlow:
                 # Puede fallar en diferentes puntos, pero verificamos setup
                 pass
         
-        # Verificar que MLflow fue configurado
+        # Verificar que MLflow fue configurado (pero no creó experimentos reales)
         mock_mlflow.set_tracking_uri.assert_called()
         mock_mlflow.set_experiment.assert_called()
 
