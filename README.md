@@ -53,7 +53,7 @@ dvc repro
 
 ## 2. Exploración y análisis de datos (EDA)
 
-El análisis exploratorio se realiza con **Plotly**, generando reportes HTML interactivos con visualizaciones descriptivas y distribuciones de variables.  
+El análisis exploratorio (EDA) se ejecuta de forma independiente del pipeline productivo, mediante mlops/run_reports.py, generando reportes interactivos en HTML con Plotly.
 
 ```bash
 python -m mlops.run_reports      # Reportes HTML interactivos (Plotly)
@@ -120,6 +120,34 @@ python -m mlops.run_reports --type models
 # Abre: reports/experiments_html/models_comparison_{experiment_name}.html
 # (Se genera un HTML separado por cada experimento encontrado en MLflow)
 ```
+
+### 2.2 Columnas numéricas, categóricas y objetivo
+
+Las siguientes columnas fueron detectadas durante el análisis estructural del dataset mediante el módulo `features.split_num_cat`, que clasifica variables según tipo y cardinalidad.
+
+| Columna                 | Tipo        | Descripción |
+|------------------------|-------------|-------------|
+| **Performance**        | Target      | Variable objetivo del modelo. |
+| Mother_occupation      | Categórica  | Ocupación de la madre. |
+| Father_occupation      | Categórica  | Ocupación del padre. |
+| Gender                 | Categórica  | Género del estudiante. |
+| Caste                  | Categórica  | Grupo social asociado al estudiante. |
+| medium                 | Categórica  | Medio o idioma de instrucción. |
+| coaching               | Categórica  | Participación en programas de coaching. |
+| Class_ten_education    | Categórica  | Nivel educativo previo (10°). |
+| Class_XII_Percentage   | Categórica* | Porcentaje de calificaciones en 12°. |
+| Class_ X_Percentage    | Categórica* | Porcentaje de calificaciones en 10°. |
+| twelve_education       | Categórica  | Educación previa en 12°. |
+| time                   | Categórica  | Tiempo dedicado al estudio. |
+| mixed_type_col         | Categórica  | Columna detectada como híbrida; convertida a categórica. |
+
+\* Aunque representan porcentajes numéricos, algunas de estas columnas presentan formato textual o cardinalidad baja en el dataset original; el pipeline las convierte correctamente mediante coerción y posterior escalado.
+
+Estas clasificaciones alimentan automáticamente:
+- la imputación mínima,
+- la codificación categórica,
+- el escalado,
+- y la transformación PCA del pipeline.
 
 ---
 
@@ -224,6 +252,8 @@ dvc dag
 - **Etapa training:** entrena el modelo, genera métricas y guarda artefactos en `models/` y `reports/`.  
 - **DVC + Git:** registran automáticamente los cambios en código, datos y salidas.
 
+Este pipeline asegura que cualquier cambio en el código de preprocesamiento o en los datos dispara la regeneración automática del flujo completo, sin intervención manual.
+
 ---
 
 ## 6. Reproducibilidad y control de versiones
@@ -289,35 +319,7 @@ proyecto_mlops_equipo_56/
 
 ---
 
-## 8. Columnas numéricas, categóricas y objetivo
-
-Las siguientes columnas fueron detectadas durante el análisis estructural del dataset mediante el módulo `features.split_num_cat`, que clasifica variables según tipo y cardinalidad.
-
-| Columna                 | Tipo        | Descripción |
-|------------------------|-------------|-------------|
-| **Performance**        | Target      | Variable objetivo del modelo. |
-| Mother_occupation      | Categórica  | Ocupación de la madre. |
-| Father_occupation      | Categórica  | Ocupación del padre. |
-| Gender                 | Categórica  | Género del estudiante. |
-| Caste                  | Categórica  | Grupo social asociado al estudiante. |
-| medium                 | Categórica  | Medio o idioma de instrucción. |
-| coaching               | Categórica  | Participación en programas de coaching. |
-| Class_ten_education    | Categórica  | Nivel educativo previo (10°). |
-| Class_XII_Percentage   | Categórica* | Porcentaje de calificaciones en 12°. |
-| Class_ X_Percentage    | Categórica* | Porcentaje de calificaciones en 10°. |
-| twelve_education       | Categórica  | Educación previa en 12°. |
-| time                   | Categórica  | Tiempo dedicado al estudio. |
-| mixed_type_col         | Categórica  | Columna detectada como híbrida; convertida a categórica. |
-
-\* Aunque representan porcentajes numéricos, algunas de estas columnas presentan formato textual o cardinalidad baja en el dataset original; el pipeline las convierte correctamente mediante coerción y posterior escalado.
-
-Estas clasificaciones alimentan automáticamente:
-- la imputación mínima,
-- la codificación categórica,
-- el escalado,
-- y la transformación PCA del pipeline.
-
-## 9. Tecnologías y librerías clave
+## 8. Tecnologías y librerías clave
 
 | Categoría | Herramientas |
 |------------|--------------|
@@ -331,11 +333,11 @@ Estas clasificaciones alimentan automáticamente:
 
 ---
 
-## 10. Pruebas unitarias y de integración
+## 9. Pruebas unitarias y de integración
 
 El proyecto incluye pruebas automatizadas para validar componentes críticos y asegurar la estabilidad del sistema.
 
-### 10.1 Ejecución de pruebas
+### 9.1 Ejecución de pruebas
 
 **⚠️ Importante:** Asegúrate de usar el pytest del entorno virtual `.venv` para garantizar que uses las dependencias correctas del proyecto.
 
@@ -388,7 +390,7 @@ pytest tests/test_reports.py
 make test
 ```
 
-### 10.2 Estructura de pruebas
+### 9.2 Estructura de pruebas
 
 ```
 tests/
@@ -397,7 +399,7 @@ tests/
 └── (futuros: test_features.py, test_preprocess.py, etc.)
 ```
 
-### 10.3 Cobertura de pruebas
+### 9.3 Cobertura de pruebas
 
 Actualmente el proyecto incluye pruebas para:
 - **Módulo de reportes** (`mlops/reports.py`):
@@ -406,7 +408,7 @@ Actualmente el proyecto incluye pruebas para:
   - Función factory `create_report`
   - Flujos de generación de reportes HTML
 
-### 10.4 Agregar nuevas pruebas
+### 9.4 Agregar nuevas pruebas
 
 Para agregar nuevas pruebas:
 1. Crea un archivo `tests/test_<modulo>.py`
@@ -427,7 +429,7 @@ def test_guess_target():
 
 ---
 
-## 11. Control de versiones y convenciones de commits
+## 10. Control de versiones y convenciones de commits
 
 El versionado de código se gestiona en GitHub bajo el repositorio:
 
@@ -447,11 +449,11 @@ PIPELINE: integración DVC y MLflow
 
 ---
 
-## 12. Documentación técnica
+## 11. Documentación técnica
 
 El proyecto cuenta con documentación técnica comprehensiva en `/docs/`:
 
-### 12.1 Informe SRE
+### 11.1 Informe SRE
 ```
 /docs/informe_sre_fase2.md
 ```
@@ -462,7 +464,7 @@ Incluye:
 - Resultados y métricas de desempeño del modelo.  
 - Conclusiones del Ingeniero de Confiabilidad (SRE).
 
-### 12.2 Reporte de Comparación de Modelos
+### 11.2 Reporte de Comparación de Modelos
 ```
 /docs/model_comparison_report.md
 ```
@@ -472,7 +474,7 @@ Incluye:
 - Justificación de la selección del mejor modelo.
 - Conclusiones y lecciones aprendidas del Data Scientist.
 
-### 12.3 Diagrama de Arquitectura
+### 11.3 Diagrama de Arquitectura
 ```
 /docs/architecture_diagram.md
 ```
@@ -483,7 +485,7 @@ Incluye:
 - Responsabilidades por rol del equipo.
 - Decisiones de arquitectura y mejoras futuras.
 
-### 12.4 Control de Versión de Datos
+### 11.4 Control de Versión de Datos
 ```
 /docs/DATA_VERSION_CONTROL.md
 ```
