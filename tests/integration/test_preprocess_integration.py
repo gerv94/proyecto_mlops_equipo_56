@@ -320,3 +320,39 @@ class TestPreprocessEdgeCases:
         # Verificar que fueron limpiadas
         assert cleaned_df["cat1"].iloc[0] == "a"
 
+    def test_pipeline_removes_mixed_type_col(self, temp_data_dir):
+        """Prueba que el pipeline elimina 'mixed_type_col' si existe."""
+        # Crear DataFrame con mixed_type_col
+        df = pd.DataFrame({
+            "numeric_col": [1, 2, 3],
+            "categorical_col": ["A", "B", "C"],
+            "mixed_type_col": [1, 2, 3],  # Columna que debe eliminarse
+            "target": ["Low", "Medium", "High"],
+        })
+        
+        raw_dir = temp_data_dir / "raw"
+        interim_dir = temp_data_dir / "interim"
+        raw_dir.mkdir(parents=True)
+        interim_dir.mkdir(parents=True)
+        
+        modified_csv = raw_dir / "student_entry_performance_modified.csv"
+        df.to_csv(modified_csv, index=False)
+        
+        repo = DatasetRepository(
+            modified_csv=modified_csv,
+            interim_dir=interim_dir,
+        )
+        
+        pipeline = PreprocessPipeline(dataset_repository=repo)
+        output_path = pipeline.make_clean_interim()
+        cleaned_df = pd.read_csv(output_path)
+        
+        # Verificar que mixed_type_col fue eliminada
+        assert "mixed_type_col" not in cleaned_df.columns
+        # Verificar que otras columnas se preservaron
+        assert "numeric_col" in cleaned_df.columns
+        assert "categorical_col" in cleaned_df.columns
+        assert "target" in cleaned_df.columns
+        # Verificar que el número de filas se preservó
+        assert cleaned_df.shape[0] == df.shape[0]
+

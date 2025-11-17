@@ -15,22 +15,35 @@ El objetivo es analizar y modelar el dataset *Student Performance on an Entrance
 
 ## 1. Manipulación y preparación de datos
 
-La preparación de datos fue implementada mediante un flujo reproducible basado en los módulos mlops/dataset.py, mlops/features.py y mlops/preprocess.py.
-El análisis exploratorio (EDA) fue separado del preprocesamiento productivo, garantizando que las transformaciones usadas durante el entrenamiento sean siempre consistentes.
+La preparación de datos en este proyecto fue diseñada como un flujo **totalmente reproducible**, separando el análisis exploratorio del preprocesamiento utilizado por el modelo.  
+Las transformaciones se implementaron en los módulos:
 
-El flujo consiste en dos etapas:
-	1.	Limpieza y tipificación (student_interim_clean.csv)
-	•	Detección automática de columnas numéricas y categóricas.
-	•	Normalización de texto en variables categóricas.
-	•	Conversión de tipos y coerción de valores.
-	•	Imputación mínima (mediana / moda).
-	2.	Preprocesamiento avanzado (student_interim_preprocessed.csv)
-	•	Escalado de numéricas (StandardScaler).
-	•	Codificación One-Hot de categóricas con handle_unknown="ignore".
-	•	Agregación opcional de componentes principales (PCA).
+- `mlops/dataset.py`
+- `mlops/features.py`
+- `mlops/preprocess.py`
 
-Estos artefactos se guardan en data/interim/ y son consumidos directamente por la etapa de entrenamiento.
-El pipeline completo se ejecuta con:
+El flujo completo consta de **dos etapas principales**, controladas por DVC:
+
+### **1.1 Limpieza y tipificación (`student_interim_clean.csv`)**
+Incluye:
+- Inferencia automática de variables numéricas y categóricas mediante heurística de cardinalidad.
+- Estandarización de texto en columnas categóricas (lowercase, trimming, normalización de espacios).
+- Conversión segura de tipos (coerción a numérico donde aplica).
+- Imputación mínima:
+  - Numéricas → mediana
+  - Categóricas → moda
+
+### **1.2 Preprocesamiento avanzado (`student_interim_preprocessed.csv`)**
+Incluye:
+- Escalado de características numéricas con **StandardScaler**.
+- Codificación One-Hot robusta con `handle_unknown="ignore"`.
+- Integración opcional de **PCA** (3 componentes) para enriquecer representaciones.
+- Unificación de variables transformadas en un dataset final listo para entrenamiento.
+
+Ambos artefactos generados se guardan en `data/interim/` y son consumidos por la etapa de entrenamiento.
+
+### **1.3 Ejecución del preprocesamiento**
+El pipeline ejecuta de manera determinística:
 
 ```bash
 dvc repro
