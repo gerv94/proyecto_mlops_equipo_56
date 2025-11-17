@@ -148,8 +148,8 @@ El script realiza las siguientes tareas:
 | F1-score (weighted) | 0.99 |
 
 El entrenamiento consume directamente los artefactos generados en la etapa de preprocesamiento:
-	•	data/interim/student_interim_clean.csv
-	•	data/interim/student_interim_preprocessed.csv
+- data/interim/student_interim_clean.csv
+- data/interim/student_interim_preprocessed.csv
 
 Esto garantiza que el modelo siempre se entrene con los mismos datos transformados de forma determinística, manteniendo la reproducibilidad del pipeline.
 
@@ -291,7 +291,7 @@ proyecto_mlops_equipo_56/
 
 ## 8. Columnas numéricas, categóricas y objetivo
 
-A continuación se presentan las columnas detectadas automáticamente por el módulo de Data Engineering, clasificadas con base en tipo y cardinalidad:
+Las siguientes columnas fueron detectadas durante el análisis estructural del dataset mediante el módulo `features.split_num_cat`, que clasifica variables según tipo y cardinalidad.
 
 | Columna                 | Tipo        | Descripción |
 |------------------------|-------------|-------------|
@@ -309,7 +309,13 @@ A continuación se presentan las columnas detectadas automáticamente por el mó
 | time                   | Categórica  | Tiempo dedicado al estudio. |
 | mixed_type_col         | Categórica  | Columna detectada como híbrida; convertida a categórica. |
 
-Estas columnas se clasificaron como categóricas debido a su cardinalidad y formato textual, aun cuando representan porcentajes.
+\* Aunque representan porcentajes numéricos, algunas de estas columnas presentan formato textual o cardinalidad baja en el dataset original; el pipeline las convierte correctamente mediante coerción y posterior escalado.
+
+Estas clasificaciones alimentan automáticamente:
+- la imputación mínima,
+- la codificación categórica,
+- el escalado,
+- y la transformación PCA del pipeline.
 
 ## 9. Tecnologías y librerías clave
 
