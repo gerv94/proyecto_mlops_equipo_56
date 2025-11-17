@@ -1,32 +1,73 @@
 ﻿from __future__ import annotations
-import pandas as pd
+
 from typing import Tuple
+
+import pandas as pd
+
 from mlops import dataset, features
+from mlops.dataset import DatasetRepository
+from mlops.features import FeatureEngineering
+
+
+class PreprocessPipeline:
+    """High-level preprocessing pipeline used by the DVC stage.
+
+    The goal is to keep all pre-processing logic encapsulated in this
+    class while ``make_clean_interim`` and ``run_all`` remain thin
+    functional wrappers for backwards compatibility.
+    """
+
+    def __init__(
+        self,
+        dataset_repository: DatasetRepository | None = None,
+        feature_engineer: FeatureEngineering | None = None,
+    ) -> None:
+        self.dataset_repository = dataset_repository or DatasetRepository()
+        self.feature_engineer = feature_engineer or FeatureEngineering()
+
+    def make_clean_interim(self) -> str:
+        """Generate the cleaned intermediate CSV without imputation.
+
+        This method:
+        - Loads the modified dataset.
+        - Applies basic typing to coerce numeric columns.
+        - Normalises categorical text values.
+        - Saves the cleaned dataset under ``data/interim``.
+        """
+
+        raw_dataframe = self.dataset_repository.load_modified()
+        typed_dataframe = self.dataset_repository.basic_typing(raw_dataframe)
+
+        numeric_columns, categorical_columns = self.feature_engineer.split_num_cat(typed_dataframe)
+        cleaned_dataframe = self.feature_engineer.clean_categoricals(
+            typed_dataframe, categorical_columns
+        )
+
+        output_path = self.dataset_repository.save_interim(
+            cleaned_dataframe, "student_interim_clean.csv"
+        )
+        return str(output_path)
+
+    def run_all(self) -> str:
+        """Entry point used by DVC: run the whole preprocessing flow."""
+
+        return self.make_clean_interim()
+
+
+# -----------------------------------------------------------------------------
+# Backwards compatible functional API
+# -----------------------------------------------------------------------------
+
+_default_pipeline = PreprocessPipeline()
+
 
 def make_clean_interim() -> str:
-    """
-    Carga dataset modificado, tipifica y limpia categóricas (solo texto).
-    NO hace imputación para evitar data leakage.
-    Solo limpieza determinística de texto (sin estadísticas globales).
-    Devuelve la ruta al CSV limpio intermedio guardado en data/interim/.
-    """
-    df = dataset.load_modified()
-    df = dataset.basic_typing(df)
+    """Backwards compatible wrapper around ``PreprocessPipeline.make_clean_interim``."""
 
-    # Normaliza texto en categóricas (limpieza determinística, no causa leakage)
-    num_cols, cat_cols = features.split_num_cat(df)
-    df_clean = features.clean_categoricals(df, cat_cols)
+    return _default_pipeline.make_clean_interim()
 
-    # NOTA: No hacemos imputación aquí para evitar data leakage.
-    # La imputación debe hacerse dentro del pipeline después de train/test split.
-
-    out_clean = dataset.save_interim(df_clean, "student_interim_clean.csv")
-    return out_clean
 
 def run_all() -> str:
-    """
-    Ejecuta el preprocesamiento completo.
-    Retorna la ruta al archivo limpio que contiene features + target.
-    """
-    clean_path = make_clean_interim()
-    return clean_path
+    """Backwards compatible wrapper around ``PreprocessPipeline.run_all``."""
+
+    return _default_pipeline.run_all()

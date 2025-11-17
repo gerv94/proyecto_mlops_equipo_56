@@ -1,56 +1,56 @@
 schema: '2.0'
 stages:
   preprocessing:
-    cmd: python mlops/run_preprocess.py
+    cmd: PYTHONPATH=. python mlops/run_preprocess.py
     deps:
     - path: data/raw/
       hash: md5
-      md5: 5712737f1859def22a157b66124ecbe7.dir
-      size: 112812
-      nfiles: 2
+      md5: e64de1ad88e5ffe5e4cc3a298f741cd3.dir
+      size: 57818
+      nfiles: 1
     - path: mlops/dataset.py
       hash: md5
-      md5: fb61253374cc9d8b31c6030de9fc4854
-      size: 4591
+      md5: 290d2dd653f730b1d57a64c64eed08c9
+      size: 2371
     - path: mlops/features.py
       hash: md5
-      md5: 6a14c7d9ef6b6598347e71d2fb670126
-      size: 7462
+      md5: 5d4ac15c2b9035d9e757f4da334e3efe
+      size: 3070
     - path: mlops/preprocess.py
       hash: md5
-      md5: 7d2d339537a2238020d1f420b1fe906b
-      size: 1666
+      md5: ee1d7d08aa03dec9aa59f2730c30046b
+      size: 1282
     - path: mlops/run_preprocess.py
       hash: md5
-      md5: 4d4ab8e90e23ce54d09c38d567c20ed7
-      size: 182
+      md5: 6d725c4234fc6512b185b4ff5053bdbc
+      size: 181
     outs:
     - path: data/interim/student_interim_clean.csv
       hash: md5
-      md5: 76db7197326a5942db9c5b100349f69b
-      size: 58246
+      md5: 543d360ae22168dcca0348a5990b30be
+      size: 57566
     - path: data/interim/student_interim_preprocessed.csv
       hash: md5
-      md5: 0471f82af7fb3753813e8a94a9df3337
-      size: 1263180
+      md5: 6ac857d76c8486747a6f5e56cc9eafb1
+      size: 1262559
   training:
-    cmd: python train/train_model_sre.py
+    cmd: PYTHONPATH=. python train/train_model_sre.py
     deps:
     - path: data/interim/student_interim_clean.csv
       hash: md5
-      md5: 76db7197326a5942db9c5b100349f69b
-      size: 58246
+      md5: 543d360ae22168dcca0348a5990b30be
+      size: 57566
     - path: data/interim/student_interim_preprocessed.csv
       hash: md5
-      md5: 0471f82af7fb3753813e8a94a9df3337
-      size: 1263180
+      md5: 6ac857d76c8486747a6f5e56cc9eafb1
+      size: 1262559
     - path: train/train_model_sre.py
       hash: md5
-      md5: 62cda1005c3eee56f41c19649ae346e1
-      size: 6574
+      md5: 79397fa6f180db1c8b0191dacaea505d
+      size: 6401
     outs:
     - path: models
       hash: md5
-      md5: a93b7b9ae97fcb8eb96863dd7df64566.dir
-      size: 1160580
+      md5: ea687ac0ab08d83e8d5805ca7e175fcf.dir
+      size: 1137166
       nfiles: 2

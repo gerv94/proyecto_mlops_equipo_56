@@ -126,9 +126,17 @@ mlflow: .ensure_venv ## Start MLflow UI server
 	@echo "Logs will be written to mlflow.log"
 	@$(MLFLOW) ui --host 127.0.0.1 --port 5001 2>&1 | tee mlflow.log
 
-test: .ensure_venv ## Run tests with pytest
-	@echo "Running tests..."
-	@$(PYTEST) tests/ -v || echo "No tests found. Add tests in tests/ directory."
+test: .ensure_venv ## Run full test suite (unit + integration)
+	@echo "Running full test suite (unit + integration)..."
+	@PYTHONPATH=. $(PYTEST) tests/ -v || echo "No tests found. Add tests in tests/ directory."
+
+test-unit: .ensure_venv ## Run unit tests only
+	@echo "Running unit tests..."
+	@PYTHONPATH=. $(PYTEST) tests/unit -v || echo "No unit tests found in tests/unit."
+
+test-integration: .ensure_venv ## Run integration tests only
+	@echo "Running integration tests..."
+	@PYTHONPATH=. $(PYTEST) tests/integration -v || echo "No integration tests found in tests/integration."
 
 lint: ## Run code quality checks (placeholder)
 	@echo "Running linters..."
