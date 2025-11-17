@@ -1,0 +1,35 @@
+
+=================================================================
+REPORTE DE EVALUACIÓN DE DRIFT
+=================================================================
+
+CLASES DEL MODELO: average, excellent, good, none, vg
+NOTA: Dataset limpio sin registros 'none'
+
+MÉTRICAS BASELINE:
+  - Accuracy: 0.5368
+  - F1-Score: 0.5182
+
+MÉTRICAS CON DRIFT:
+  - Accuracy: 0.5294
+  - F1-Score: 0.5126
+
+DEGRADACIÓN:
+  - Accuracy drop: 1.37%
+  - F1-Score drop: 1.07%
+
+PSI POR FEATURE (Population Stability Index):
+  - Gender: 0.0000 🟢 OK
+  - Caste: 0.0000 🟢 OK
+  - coaching: 0.0479 🟢 OK
+  - time: 0.9749 🔴 ALTO
+  - Class_ten_education: 0.0000 🟢 OK
+  - twelve_education: 0.0000 🟢 OK
+  - medium: 0.0000 🟢 OK
+  - Class_ X_Percentage: 0.1711 🟡 MODERADO
+  - Class_XII_Percentage: 0.0000 🟢 OK
+  - Father_occupation: 0.0000 🟢 OK
+  - Mother_occupation: 0.0000 🟢 OK
+
+ALERTAS:
+  🟢 OK: Drift dentro de umbrales aceptables

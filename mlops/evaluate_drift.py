@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
 import json
 import os
 import logging
@@ -38,44 +39,60 @@ def evaluate_drift():
     baseline_data = pd.read_csv("data/interim/student_interim_clean.csv")
     drift_data = pd.read_csv("data/interim/student_drift_data.csv")
     
-    # Separar features y target
-    X_baseline = baseline_data.drop(columns=['Performance'])
-    y_baseline = baseline_data['Performance']
-    X_drift = drift_data.drop(columns=['Performance'])
-    y_drift = drift_data['Performance']
+    # Separar features y target (dataset completo)
+    X_baseline_full = baseline_data.drop(columns=["Performance"])
+    y_baseline_full = baseline_data["Performance"]
+    X_drift_full = drift_data.drop(columns=["Performance"])
+    y_drift_full = drift_data["Performance"]
+    
+    # Usar el mismo esquema de split que train_model_sre.py
+    # test_size=0.2, random_state=42, stratify en y
+    X_base_train, X_base_test, y_base_train, y_base_test = train_test_split(
+        X_baseline_full,
+        y_baseline_full,
+        test_size=0.2,
+        random_state=42,
+        stratify=y_baseline_full,
+    )
+    
+    # Mantener los mismos índices para baseline y drift (drift_data es copia de baseline)
+    test_idx = X_base_test.index
+    X_drift_test = X_drift_full.loc[test_idx]
+    y_drift_test = y_drift_full.loc[test_idx]
     
     # Codificar target (el modelo predice números, no strings)
     label_encoder = LabelEncoder()
-    label_encoder.fit(y_baseline)  # Fit en baseline
-    y_baseline_encoded = label_encoder.transform(y_baseline)
-    y_drift_encoded = label_encoder.transform(y_drift)
+    label_encoder.fit(y_baseline_full)  # Fit en todos los datos baseline
+    y_base_test_encoded = label_encoder.transform(y_base_test)
+    y_drift_test_encoded = label_encoder.transform(y_drift_test)
     
     logger.info(f"Clases detectadas: {label_encoder.classes_}")
     
     # Predicciones (el modelo ya devuelve números)
-    y_pred_baseline = model.predict(X_baseline)
-    y_pred_drift = model.predict(X_drift)
+    y_pred_baseline = model.predict(X_base_test)
+    y_pred_drift = model.predict(X_drift_test)
     
-    # NOTA: Ya no necesitamos filtrar 'none' porque los datos fueron limpiados en origen
-    # El dataset ya no contiene registros con Performance='none'
-    
-    # Métricas
-    acc_baseline = accuracy_score(y_baseline_encoded, y_pred_baseline)
-    acc_drift = accuracy_score(y_drift_encoded, y_pred_drift)
-    f1_baseline = f1_score(y_baseline_encoded, y_pred_baseline, average='weighted', zero_division=0)
-    f1_drift = f1_score(y_drift_encoded, y_pred_drift, average='weighted', zero_division=0)
+    # Métricas sobre el mismo test set que train_model_sre.py
+    acc_baseline = accuracy_score(y_base_test_encoded, y_pred_baseline)
+    acc_drift = accuracy_score(y_drift_test_encoded, y_pred_drift)
+    f1_baseline = f1_score(
+        y_base_test_encoded, y_pred_baseline, average="weighted", zero_division=0
+    )
+    f1_drift = f1_score(
+        y_drift_test_encoded, y_pred_drift, average="weighted", zero_division=0
+    )
     
     # Calcular drops
     acc_drop = (acc_baseline - acc_drift) / acc_baseline * 100 if acc_baseline > 0 else 0
     f1_drop = (f1_baseline - f1_drift) / f1_baseline * 100 if f1_baseline > 0 else 0
     
-    # Calcular PSI para features categóricas
-    categorical_cols = X_baseline.select_dtypes(include=['object']).columns
+    # Calcular PSI para features categóricas (usando TODO el dataset)
+    categorical_cols = X_baseline_full.select_dtypes(include=["object"]).columns
     psi_results = {}
     
     for col in categorical_cols:
         try:
-            psi = calculate_psi_categorical(X_baseline[col], X_drift[col])
+            psi = calculate_psi_categorical(X_baseline_full[col], X_drift_full[col])
             psi_results[col] = psi
         except Exception as e:
             logger.warning(f"No se pudo calcular PSI para {col}: {e}")
@@ -170,6 +187,62 @@ PSI POR FEATURE (Population Stability Index):
     plt.tight_layout()
     plt.savefig("reports/drift/drift_plots.png", dpi=150, bbox_inches='tight')
     logger.info("Gráficos guardados en reports/drift/drift_plots.png")
+    
+    # Visualización adicional: distribuciones de features baseline vs drift
+    num_features = len(categorical_cols)
+    if num_features > 0:
+        n_cols = 3
+        n_rows = int(np.ceil(num_features / n_cols))
+        fig_feat, axes_feat = plt.subplots(n_rows, n_cols, figsize=(5 * n_cols, 4 * n_rows))
+        axes_array = np.array(axes_feat).reshape(-1)
+        
+        for ax, col in zip(axes_array, categorical_cols):
+            base_dist = X_baseline_full[col].value_counts(normalize=True, sort=False)
+            drift_dist = X_drift_full[col].value_counts(normalize=True, sort=False)
+            categories = sorted(set(base_dist.index).union(set(drift_dist.index)))
+            base_vals = [base_dist.get(cat, 0.0) for cat in categories]
+            drift_vals = [drift_dist.get(cat, 0.0) for cat in categories]
+            x_vals = np.arange(len(categories))
+            width_bar = 0.4
+            
+            ax.bar(
+                x_vals - width_bar / 2,
+                base_vals,
+                width_bar,
+                label="Baseline",
+                color="steelblue",
+                alpha=0.7,
+            )
+            ax.bar(
+                x_vals + width_bar / 2,
+                drift_vals,
+                width_bar,
+                label="Drift",
+                color="orange",
+                alpha=0.7,
+            )
+            ax.set_title(col)
+            ax.set_xticks(x_vals)
+            ax.set_xticklabels(categories, rotation=45, ha="right")
+            ax.set_ylabel("Proporción")
+            ax.grid(axis="y", alpha=0.3)
+        
+        # Ocultar ejes sobrantes si los hay
+        for ax in axes_array[num_features:]:
+            ax.axis("off")
+        
+        handles, labels = axes_array[0].get_legend_handles_labels()
+        fig_feat.legend(handles, labels, loc="upper right")
+        fig_feat.tight_layout()
+        plt.savefig(
+            "reports/drift/feature_distributions_baseline_vs_drift.png",
+            dpi=150,
+            bbox_inches="tight",
+        )
+        logger.info(
+            "Gráfico de distribuciones baseline vs drift guardado en "
+            "reports/drift/feature_distributions_baseline_vs_drift.png"
+        )
     
     return {
         "acc_baseline": float(acc_baseline),

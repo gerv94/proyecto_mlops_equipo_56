@@ -20,6 +20,8 @@ from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     confusion_matrix, classification_report
 )
+import matplotlib.pyplot as plt
+import seaborn as sns
 import mlflow
 import mlflow.sklearn
 import joblib
@@ -56,8 +58,8 @@ class GridSearchTrainer:
         mlflow_tracking_uri: str = "file:./mlruns",
         mlflow_experiment: str = "student_performance_gridsearch_amplio",
         model_random_state: int = 888,
-        cv_folds: int = 5,
-        top_n_models: int = 10,
+        cv_folds: int = 3,
+        top_n_models: int = 5,
     ) -> None:
         """Initialize the grid search trainer with configuration."""
         self.seed = seed
@@ -88,19 +90,51 @@ class GridSearchTrainer:
         logging.info("Tracking MLflow configurado para Grid Search Amplio.")
 
     def load_data(self) -> Tuple[pd.DataFrame, pd.Series]:
-        """Load and prepare data from CSV file.
+        """Load and prepare data from CSV file with data cleaning.
         
         Returns:
             Tuple of (features DataFrame, target Series)
         """
         df = pd.read_csv(self.data_path)
         
-        logging.info(f"Datos cargados. Dataset completo: {df.shape}")
-        logging.info(f"Distribución de clases: {df['Performance'].value_counts().to_dict()}")
+        logging.info(f"Datos originales cargados. Dataset completo: {df.shape}")
+        logging.info(f"Distribución original: {df['Performance'].value_counts().to_dict()}")
         
-        # Separar features y target (IGUAL QUE EL NOTEBOOK)
+        # PASO 1: ELIMINAR REGISTROS DONDE Performance = 'none', 'None' o vacío
+        initial_size = len(df)
+        df = df[df['Performance'].notna()]
+        df = df[~df['Performance'].astype(str).str.lower().isin(['none', 'nan', ''])]
+        
+        removed_count = initial_size - len(df)
+        if removed_count > 0:
+            logging.info(f"✓ Eliminados {removed_count} registros con Performance='none'")
+        
+        # PASO 2: ELIMINAR REGISTROS CON 'none' EN FEATURES
         X = df.drop(columns=['Performance'])
         y = df['Performance']
+        
+        valid_mask = pd.Series([True] * len(X), index=X.index)
+        
+        for col in X.columns:
+            if X[col].dtype == 'object':
+                mask_invalid = (
+                    X[col].isna() | 
+                    X[col].astype(str).str.strip().str.lower().isin(['none', 'nan', ''])
+                )
+                if mask_invalid.any():
+                    logging.info(f"✓ Detectados {mask_invalid.sum()} valores inválidos en '{col}'")
+                    valid_mask &= ~mask_invalid
+        
+        initial_feature_size = len(X)
+        X = X[valid_mask]
+        y = y[valid_mask]
+        removed_feature_count = initial_feature_size - len(X)
+        
+        if removed_feature_count > 0:
+            logging.info(f"✓ Eliminados {removed_feature_count} registros con valores inválidos en features")
+        
+        logging.info(f"Dataset final limpio: {X.shape}")
+        logging.info(f"Distribución final: {y.value_counts().to_dict()}")
         
         return X, y
 
@@ -170,18 +204,41 @@ class GridSearchTrainer:
         return preprocessor
 
     def get_param_grid(self) -> Dict[str, List[Any]]:
-        """Get parameter grid for grid search.
+        """Get parameter grid based on train_model_sre.py parameters.
+        
+        Parámetros actuales en train_model_sre.py:
+        - n_estimators=20
+        - max_depth=20
+        - min_samples_split=15
+        - criterion='gini'
+        - class_weight=None
+        - max_features='sqrt'
+        
+        Búsqueda con pasos pequeños alrededor de estos valores exactos.
         
         Returns:
             Dictionary with parameter grid
         """
         return {
-            'classifier__n_estimators': [18, 20, 22, 25],
-            'classifier__max_depth': [18, 20, 22],
-            'classifier__min_samples_split': [12, 15, 18],
+            # n_estimators: alrededor de 20 (pasos de 2)
+            'classifier__n_estimators': [16, 18, 20, 22, 24, 26],
+            
+            # max_depth: alrededor de 20 (pasos de 2)
+            'classifier__max_depth': [16, 18, 20, 22, 24],
+            
+            # min_samples_split: alrededor de 15 (pasos de 2-3)
+            'classifier__min_samples_split': [10, 12, 15, 18, 20],
+            
+            # min_samples_leaf: valores bajos
             'classifier__min_samples_leaf': [1, 2],
-            'classifier__max_features': ['sqrt', 'log2'],
+            
+            # max_features: sqrt como en train_model_sre.py
+            'classifier__max_features': ['sqrt'],
+            
+            # criterion: gini como en train_model_sre.py
             'classifier__criterion': ['gini'],
+            
+            # class_weight: None como en train_model_sre.py
             'classifier__class_weight': [None]
         }
 
@@ -266,20 +323,6 @@ class GridSearchTrainer:
         
         return grid_search
 
-    def get_top_models(self, grid_search: GridSearchCV) -> pd.Index:
-        """Get indices of top N models from grid search results.
-        
-        Args:
-            grid_search: Fitted GridSearchCV object
-            
-        Returns:
-            Index of top N models
-        """
-        results_df = pd.DataFrame(grid_search.cv_results_)
-        results_df = results_df.sort_values('mean_test_f1_weighted', ascending=False)
-        top_indices = results_df.head(self.top_n_models).index
-        return top_indices
-
     def log_model_to_mlflow(
         self,
         grid_search: GridSearchCV,
@@ -320,33 +363,49 @@ class GridSearchTrainer:
         # Predicciones en test
         y_pred_test = current_pipeline.predict(X_test)
         
-        # Métricas
-        test_acc = accuracy_score(y_test, y_pred_test)
-        test_f1_weighted = f1_score(y_test, y_pred_test, average='weighted')
-        test_f1_macro = f1_score(y_test, y_pred_test, average='macro')
+        # Métricas en test (IGUALES A train_model_sre.py)
+        test_accuracy = accuracy_score(y_test, y_pred_test)
+        test_f1_weighted = f1_score(y_test, y_pred_test, average='weighted', zero_division=0)
+        test_f1_macro = f1_score(y_test, y_pred_test, average='macro', zero_division=0)
         test_precision = precision_score(y_test, y_pred_test, average='weighted', zero_division=0)
         test_recall = recall_score(y_test, y_pred_test, average='weighted', zero_division=0)
+        
+        # Crear matriz de confusión
+        cm_path = self.create_confusion_matrix(y_test, y_pred_test, rank)
+        
+        # Registrar métricas (IGUALES A train_model_sre.py)
+        mlflow.log_metric("test_accuracy", test_accuracy)
+        mlflow.log_metric("test_f1_weighted", test_f1_weighted)
+        mlflow.log_metric("test_f1_macro", test_f1_macro)
+        mlflow.log_metric("test_precision_weighted", test_precision)
+        mlflow.log_metric("test_recall_weighted", test_recall)
+        
+        # Registrar matriz de confusión
+        mlflow.log_artifact(str(cm_path))
         
         # Log parámetros
         mlflow.log_params(clean_params)
         mlflow.log_param('preprocessing', 'OneHotEncoder_only_like_notebook')
         mlflow.log_param('rank', rank)
         
-        # Log métricas
+        # Log métricas (CV + test)
         metrics = {
             'cv_accuracy_mean': grid_search.cv_results_['mean_test_accuracy'][idx],
             'cv_accuracy_std': grid_search.cv_results_['std_test_accuracy'][idx],
             'cv_f1_weighted_mean': grid_search.cv_results_['mean_test_f1_weighted'][idx],
             'cv_f1_weighted_std': grid_search.cv_results_['std_test_f1_weighted'][idx],
             'cv_f1_macro_mean': grid_search.cv_results_['mean_test_f1_macro'][idx],
-            'test_accuracy': test_acc,
+            'test_accuracy': test_accuracy,
             'test_f1_weighted': test_f1_weighted,
             'test_f1_macro': test_f1_macro,
             'test_precision_weighted': test_precision,
-            'test_recall_weighted': test_recall
+            'test_recall_weighted': test_recall,
         }
         mlflow.log_metrics(metrics)
-        
+
+        cv_f1_weighted_mean = metrics['cv_f1_weighted_mean']
+        cv_f1_weighted_std = metrics['cv_f1_weighted_std']
+
         # Marcar el mejor
         if rank == 1:
             mlflow.set_tag('best_model', 'True')
@@ -355,14 +414,17 @@ class GridSearchTrainer:
             print(f"\n{'='*70}")
             print(f"*** MEJOR MODELO (Rank {rank}) ***")
             print(f"{'='*70}")
-            print(f"CV F1-Weighted: {metrics['cv_f1_weighted_mean']:.4f} ± {metrics['cv_f1_weighted_std']:.4f}")
-            print(f"Test Accuracy:  {test_acc:.4f}")
+            print(f"CV F1-Weighted: {cv_f1_weighted_mean:.4f} ± {cv_f1_weighted_std:.4f}")
+            print(f"Test Accuracy:  {test_accuracy:.4f}")
             print(f"Test F1-Weighted: {test_f1_weighted:.4f}")
             print(f"Test F1-Macro:    {test_f1_macro:.4f}")
+            print(f"Test Precision:   {test_precision:.4f}")
+            print(f"Test Recall:      {test_recall:.4f}")
             print(f"\nParámetros:")
             for k, v in clean_params.items():
                 if k != 'random_state':
                     print(f"  {k}: {v}")
+            print(f"Matriz de confusión: {cm_path.name}")
             print(f"{'='*70}\n")
             
             # Guardar mejor modelo
@@ -371,8 +433,84 @@ class GridSearchTrainer:
             mlflow.log_artifact(str(best_model_path))
             mlflow.sklearn.log_model(current_pipeline, "best_model")
         else:
-            print(f"Rank {rank}: CV F1={metrics['cv_f1_weighted_mean']:.4f}, "
-                  f"Test Acc={test_acc:.4f}, Test F1={test_f1_weighted:.4f}")
+            print(f"\n{'='*70}")
+            print(f"Rank {rank}: CV F1={cv_f1_weighted_mean:.4f}, Test Acc={test_accuracy:.4f}, Test F1={test_f1_weighted:.4f}")
+            print(f"Parámetros:")
+            for key, value in clean_params.items():
+                if key != 'random_state':
+                    print(f"  {key}: {value}")
+            print(f"Métricas detalladas:")
+            print(f"  Test Accuracy: {test_accuracy:.4f}")
+            print(f"  Test F1-Weighted: {test_f1_weighted:.4f}")
+            print(f"  Test F1-Macro: {test_f1_macro:.4f}")
+            print(f"  Test Precision: {test_precision:.4f}")
+            print(f"  Test Recall: {test_recall:.4f}")
+            print(f"  Matriz de confusión: {cm_path.name}")
+            print(f"{'='*70}")
+
+    def create_confusion_matrix(
+        self, y_test: np.ndarray, y_pred: np.ndarray, rank: int
+    ) -> Path:
+        """Create and save confusion matrix for a model.
+        
+        Args:
+            y_test: True labels
+            y_pred: Predicted labels
+            rank: Rank of the model
+            
+        Returns:
+            Path to the saved confusion matrix image
+        """
+        # Clases ordenadas (sin 'none' porque ya fue eliminado en la limpieza)
+        classes_ordered = ["average", "good", "vg", "excellent"]
+        labels_ordered = [
+            self.label_encoder.transform([class_name])[0]
+            for class_name in classes_ordered
+            if class_name in self.label_encoder.classes_
+        ]
+        
+        cm = confusion_matrix(
+            y_test,
+            y_pred,
+            labels=labels_ordered,
+        )
+        
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(
+            cm,
+            annot=True,
+            fmt="d",
+            cmap="Blues",
+            xticklabels=classes_ordered,
+            yticklabels=classes_ordered,
+            cbar_kws={"label": "Cantidad"},
+        )
+        plt.xlabel("Predicción", fontsize=13, fontweight="bold")
+        plt.ylabel("Real", fontsize=13, fontweight="bold")
+        plt.title(f"Matriz de confusión - Rank {rank}", fontsize=14, fontweight="bold")
+        plt.xticks(rotation=0)
+        plt.yticks(rotation=0)
+        
+        cm_path = self.models_dir / f"conf_matrix_gridsearch_rank_{rank}.png"
+        plt.savefig(cm_path, bbox_inches="tight", dpi=100)
+        plt.close()
+        
+        logging.info(f"Matriz de confusión guardada en {cm_path}")
+        return cm_path
+
+    def get_top_models(self, grid_search: GridSearchCV) -> pd.Index:
+        """Get indices of top N models from grid search results.
+        
+        Args:
+            grid_search: Fitted GridSearchCV object
+            
+        Returns:
+            Index of top N models
+        """
+        results_df = pd.DataFrame(grid_search.cv_results_)
+        results_df = results_df.sort_values('mean_test_f1_weighted', ascending=False)
+        top_indices = results_df.head(self.top_n_models).index
+        return top_indices
 
     def log_top_models_to_mlflow(
         self,
@@ -395,10 +533,11 @@ class GridSearchTrainer:
             y_test: Test target
             preprocessor: Preprocessor used
         """
-        print("Registrando top 10 modelos en MLflow...\n")
+        print(f"Registrando top {self.top_n_models} modelos en MLflow...\n")
         
         for rank, idx in enumerate(top_indices, 1):
-            with mlflow.start_run(run_name=f"gridsearch_rank_{rank}", nested=False):
+            run_name = f"gridsearch_rank_{rank}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            with mlflow.start_run(run_name=run_name, nested=False):
                 self.log_model_to_mlflow(
                     grid_search, idx, rank, X_train, X_test, y_train, y_test, preprocessor
                 )
@@ -415,20 +554,30 @@ class GridSearchTrainer:
         total_combinations = np.prod([len(v) for v in param_grid.values()])
         
         print("\n" + "="*70)
-        print("GRID SEARCH FINO - BÚSQUEDA CERCANA AL MODELO BASE")
+        print("GRID SEARCH - BASADO EN PARÁMETROS DE train_model_sre.py")
         print("="*70)
-        print(f"Modelo base: n_estimators=20, max_depth=20, min_samples_split=15")
-        print(f"Random state modelo: {self.model_random_state}")
-        print(f"\nRangos de búsqueda:")
-        print(f"  n_estimators: [18, 20, 22, 25]")
-        print(f"  max_depth: [18, 20, 22]")
-        print(f"  min_samples_split: [12, 15, 18]")
-        print(f"  min_samples_leaf: [1, 2]")
-        print(f"  max_features: ['sqrt', 'log2']")
-        print(f"\nTotal de combinaciones: {total_combinations}")
-        print(f"Tiempo estimado: ~15-20 minutos")
-        print(f"CV folds: {self.cv_folds}")
+        print(f"Parámetros base (train_model_sre.py):")
+        print(f"  n_estimators=20, max_depth=20, min_samples_split=15")
+        print(f"  criterion='gini', class_weight=None, max_features='sqrt'")
+        print(f"\nRandom state modelo: {self.model_random_state}")
+        print(f"\nLimpieza de datos:")
+        print(f"  ✓ Eliminados registros con Performance='none'")
+        print(f"  ✓ Eliminados registros con valores 'none' en features")
+        print(f"\nRangos de búsqueda (pasos pequeños):")
+        print(f"  n_estimators: {param_grid['classifier__n_estimators']}")
+        print(f"  max_depth: {param_grid['classifier__max_depth']}")
+        print(f"  min_samples_split: {param_grid['classifier__min_samples_split']}")
+        print(f"  min_samples_leaf: {param_grid['classifier__min_samples_leaf']}")
+        print(f"  max_features: {param_grid['classifier__max_features']}")
+        print(f"  criterion: {param_grid['classifier__criterion']}")
+        print(f"  class_weight: {param_grid['classifier__class_weight']}")
+        print(f"\nTotal de combinaciones: {total_combinations:,}")
+        print(f"Entrenamientos totales (con CV={self.cv_folds}): {total_combinations * self.cv_folds:,}")
+        print(f"Tiempo estimado: ~10-15 minutos")
         print(f"Métrica principal: f1_weighted")
+        print(f"Top modelos a registrar: {self.top_n_models}")
+        print(f"Métricas reportadas: Accuracy, F1-Weighted, F1-Macro, Precision, Recall")
+        print(f"Artefactos: Matrices de confusión para top {self.top_n_models} modelos")
         print(f"Preprocessing: OneHotEncoder (remainder='drop')")
         print("="*70 + "\n")
         

@@ -1,0 +1,15 @@
+              precision    recall  f1-score   support
+
+     average       0.94      0.61      0.74        28
+        good       0.42      0.47      0.44        38
+          vg       0.42      0.69      0.52        36
+   excellent       0.00      0.00      0.00        19
+
+    accuracy                           0.50       121
+   macro avg       0.44      0.44      0.43       121
+weighted avg       0.47      0.50      0.47       121
+
+
+Run: rf_train_ordinal_20251117_163908
+Metrics: {'mae': 0.6068652337319295, 'accuracy': 0.49586776859504134, 'precision_weighted': 0.4739786875093429, 'recall_weighted': 0.49586776859504134, 'f1_weighted': 0.4655747195272887}
+Clases (ordial): ['average', 'good', 'vg', 'excellent']
