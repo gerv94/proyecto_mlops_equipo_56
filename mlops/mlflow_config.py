@@ -15,7 +15,7 @@ import mlflow
 
 # Host/port provided by Makefile (server side). If tracking URI is not given,
 # we derive it from these values for local client connections.
-_MLFLOW_PORT = os.environ.get("MLFLOW_PORT", "5000")
+_MLFLOW_PORT = os.environ.get("MLFLOW_PORT", "5050")
 _MLFLOW_HOST = os.environ.get("MLFLOW_HOST", "127.0.0.1")
 # When server binds to 0.0.0.0, clients should connect using 127.0.0.1
 _HOST_FOR_URL = "127.0.0.1" if _MLFLOW_HOST in ("0.0.0.0", "::") else _MLFLOW_HOST

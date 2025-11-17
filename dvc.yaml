@@ -18,3 +18,4 @@
     outs:
       - reports/classification_report_latest.txt:
           cache: false
+      - models/best_gridsearch_amplio.joblib

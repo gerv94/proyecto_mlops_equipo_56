@@ -33,11 +33,15 @@ MLFLOW := $(VENV_BIN)$(SEP)mlflow$(EXE)
 PYTEST := $(VENV_BIN)$(SEP)pytest$(EXE)
 
 # MLflow server configuration (overridable)
-MLFLOW_PORT ?= 5000
+MLFLOW_PORT ?= 5050
 MLFLOW_HOST ?= 0.0.0.0
 MLFLOW_BACKEND_URI ?= sqlite:///mlflow.db
 MLFLOW_ARTIFACT_ROOT ?= s3://itesm-mna/202502-equipo56/mlflow
 MLFLOW_LOG ?= mlflow.log
+
+# Client tracking URI (exported) to align scripts/tests with server port
+MLFLOW_TRACKING_URI ?= http://127.0.0.1:$(MLFLOW_PORT)
+export MLFLOW_TRACKING_URI
 
 # ###############################################################################
 # COMMANDS                                                                      #
@@ -60,6 +64,11 @@ show_env: ## Show Python environment information
 	@echo "DVC: $(DVC)"
 	@echo "MLflow: $(MLFLOW)"
 	@echo "Virtual environment: $(VENV_NAME)"
+	@echo "MLFLOW_PORT: $(MLFLOW_PORT)"
+	@echo "MLFLOW_HOST: $(MLFLOW_HOST)"
+	@echo "MLFLOW_BACKEND_URI: $(MLFLOW_BACKEND_URI)"
+	@echo "MLFLOW_ARTIFACT_ROOT: $(MLFLOW_ARTIFACT_ROOT)"
+	@echo "MLFLOW_TRACKING_URI (exported): $(MLFLOW_TRACKING_URI)"
 
 # ###############################################################################
 # VIRTUAL ENV (no shell-specific -d checks)                                      #
