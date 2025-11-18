@@ -16,9 +16,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Application code
 COPY app_api.py .
 COPY mlops/ ./mlops/
-COPY models/best_gridsearch_amplio.joblib ./models/best_gridsearch_amplio.joblib
+
+# DVC metadata (to allow runtime dvc pull)
+COPY dvc.yaml dvc.lock ./
+COPY .dvc/ .dvc/
+
+# Entrypoint script to setup AWS profile and pull artifacts via DVC at runtime
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 RUN mkdir -p mlruns reports/drift
 
@@ -27,4 +35,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["uvicorn", "app_api:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["./entrypoint.sh"]
