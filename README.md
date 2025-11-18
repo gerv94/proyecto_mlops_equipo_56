@@ -493,3 +493,77 @@ Incluye:
 - Trazabilidad de transformaciones de datos.
 - Versionado de datasets con DVC.
 - Ejecuciones y resultados del pipeline.
+
+## 12. Containerización de la API del Proyecto MLOPS (FastAPI + Docker)
+Versión de Python: **3.12.6-slim**
+
+### 12.1 Objetivo
+Este contenedor empaqueta la API de predicción junto con:
+- El modelo entrenado (`models/best_gridsearch_amplio.joblib`)
+- El archivo `requirements.txt`
+- El código del proyecto
+
+Garantiza portabilidad y reproducibilidad en cualquier entorno con Docker.
+
+### 12.2 Requisitos Previos
+
+ Windows / Mac
+- Docker Desktop
+
+Linux
+sudo apt update
+sudo apt install docker.io -y
+sudo systemctl enable docker --now
+
+Estructura mínima
+
+proyecto_mlops_equipo_56/
+```
+├── app_api.py
+├── Dockerfile
+├── requirements.txt
+├── models/
+│   └── best_gridsearch_amplio.joblib
+└── ...
+```
+
+### 12.3 Dockerfile (Python 3.12.6-slim)
+
+FROM python:3.12.6-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["uvicorn", "app_api:app", "--host", "0.0.0.0", "--port", "8000"]
+
+### 12.4 Construcción
+
+docker build -t student-performance-api:v1 .
+
+### 12.5 Ejecución
+
+docker run -d -p 8000:8000 --name student-performance-api student-performance-api:v1
+
+### 12.6 Pruebas rápidas
+
+Health:
+http://localhost:8000/
+
+Docs:
+http://localhost:8000/docs
+
+Curl ejemplo:
+curl -X POST "http://localhost:8000/predict" -H "Content-Type: application/json" -d '{"students":[{"Gender":"Male","Caste":"General","coaching":"yes","time":"3-4 hours","Class_ten_education":"CBSE","twelve_education":"CBSE","medium":"English","Class_X_Percentage":"vg","Class_XII_Percentage":"vg","Father_occupation":"Business","Mother_occupation":"Housewife"}]}'
+
+### 12.7 Actualización
+
+docker build -t student-performance-api:v2 .
+docker stop student-performance-api
+docker run -d -p 8000:8000 student-performance-api:v2
+
+### 12.8 Notas finales
+- Usa python:3.12.6-slim.
+- Contenedor incluye el modelo entrenado.
+- Integrar esta documentación en el README final del proyecto.
+
