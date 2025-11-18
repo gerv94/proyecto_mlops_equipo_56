@@ -11,25 +11,25 @@ MÉTRICAS BASELINE:
   - F1-Score: 0.5182
 
 MÉTRICAS CON DRIFT:
-  - Accuracy: 0.5294
-  - F1-Score: 0.5126
+  - Accuracy: 0.5074
+  - F1-Score: 0.5027
 
 DEGRADACIÓN:
-  - Accuracy drop: 1.37%
-  - F1-Score drop: 1.07%
+  - Accuracy drop: 5.48%
+  - F1-Score drop: 2.98%
 
 PSI POR FEATURE (Population Stability Index):
-  - Gender: 0.0000 🟢 OK
-  - Caste: 0.0000 🟢 OK
+  - Gender: 0.0644 🟢 OK
+  - Caste: 0.0856 🟢 OK
   - coaching: 0.0479 🟢 OK
-  - time: 0.9749 🔴 ALTO
-  - Class_ten_education: 0.0000 🟢 OK
-  - twelve_education: 0.0000 🟢 OK
-  - medium: 0.0000 🟢 OK
-  - Class_ X_Percentage: 0.1711 🟡 MODERADO
-  - Class_XII_Percentage: 0.0000 🟢 OK
-  - Father_occupation: 0.0000 🟢 OK
-  - Mother_occupation: 0.0000 🟢 OK
+  - time: 0.2472 🟡 MODERADO
+  - Class_ten_education: 0.0694 🟢 OK
+  - twelve_education: 0.0812 🟢 OK
+  - medium: 0.0224 🟢 OK
+  - Class_ X_Percentage: 0.1760 🟡 MODERADO
+  - Class_XII_Percentage: 0.0619 🟢 OK
+  - Father_occupation: 0.1503 🟡 MODERADO
+  - Mother_occupation: 0.0709 🟢 OK
 
 ALERTAS:
-  🟢 OK: Drift dentro de umbrales aceptables
+  🟡 ALERTA AMARILLA: Accuracy drop > 5% - Revisión recomendada
