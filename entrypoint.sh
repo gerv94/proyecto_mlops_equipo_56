@@ -43,6 +43,13 @@ if [ ! -f "$MODEL_PATH" ]; then
   echo "Model not found at $MODEL_PATH. Enabling DVC no-scm mode and pulling from remote using profile 'equipo56'..."
   # Ensure DVC operates without a Git repository
   dvc config core.no_scm true
+  # Ensure remote uses expected profile & region
+  dvc remote modify team_remote profile equipo56 || true
+  dvc remote modify team_remote region "${REGION}" || true
+  # Optional: set as default remote if not already
+  dvc remote default team_remote || true
+  # Show effective DVC config (safe: contains url/region/profile)
+  dvc config -l || true
   # Create parent dir just in case
   mkdir -p "$(dirname "$MODEL_PATH")"
   if ! dvc pull -v "$MODEL_PATH"; then
