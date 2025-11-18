@@ -354,11 +354,11 @@ class TestAuxiliaryMethods:
         assert trainer.models_dir.exists()
         assert trainer.reports_dir.exists()
 
-    @patch("train.train_model_sre.mlflow")
-    def test_setup_mlflow(self, mock_mlflow, trainer):
-        """Test que _setup_mlflow configura MLflow correctamente."""
+    @patch("train.train_model_sre.setup_mlflow")
+    def test_setup_mlflow(self, mock_setup_mlflow, trainer):
+        """Test que _setup_mlflow llama a setup_mlflow correctamente."""
         trainer._setup_mlflow()
         
-        mock_mlflow.set_tracking_uri.assert_called_once()
-        mock_mlflow.set_experiment.assert_called_once_with(trainer.mlflow_experiment)
+        # Verificar que se llamó setup_mlflow con el experimento correcto
+        mock_setup_mlflow.assert_called_once_with(trainer.mlflow_experiment)
 

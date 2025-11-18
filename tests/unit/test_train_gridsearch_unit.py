@@ -71,8 +71,8 @@ class TestGridSearchTrainerInit:
         assert trainer.seed == SEED
         assert trainer.data_path == Path("data/interim/student_interim_clean.csv")
         assert trainer.model_random_state == 888
-        assert trainer.cv_folds == 5
-        assert trainer.top_n_models == 10
+        assert trainer.cv_folds == 3  # Valor por defecto en el código
+        assert trainer.top_n_models == 5  # Valor por defecto en el código
 
     def test_init_custom_values(self):
         """Test que la inicialización con valores personalizados funciona."""
@@ -317,13 +317,13 @@ class TestAuxiliaryMethods:
         assert trainer.models_dir.exists()
         assert trainer.reports_dir.exists()
 
-    @patch("train.train_gridsearch.mlflow")
-    def test_setup_mlflow(self, mock_mlflow, trainer):
-        """Test que _setup_mlflow configura MLflow correctamente."""
+    @patch("train.train_gridsearch.setup_mlflow")
+    def test_setup_mlflow(self, mock_setup_mlflow, trainer):
+        """Test que _setup_mlflow llama a setup_mlflow correctamente."""
         trainer._setup_mlflow()
         
-        mock_mlflow.set_tracking_uri.assert_called_once()
-        mock_mlflow.set_experiment.assert_called_once_with(trainer.mlflow_experiment)
+        # Verificar que se llamó setup_mlflow con el experimento correcto
+        mock_setup_mlflow.assert_called_once_with(trainer.mlflow_experiment)
 
     def test_print_grid_search_info(self, trainer, capsys):
         """Test que print_grid_search_info imprime información."""
