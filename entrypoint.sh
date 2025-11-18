@@ -37,15 +37,23 @@ export AWS_SDK_LOAD_CONFIG=1
 # Unset direct env credentials to ensure boto3 uses the profile
 unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN || true
 
+# Derive S3 endpoint for the configured region (helps avoid region mismatch 400s)
+if [ "${REGION}" = "us-east-1" ]; then
+  S3_ENDPOINT="https://s3.amazonaws.com"
+else
+  S3_ENDPOINT="https://s3.${REGION}.amazonaws.com"
+fi
+
 # 4) Enable no-scm mode in repo config and pull DVC artifacts if missing
 MODEL_PATH="models/best_gridsearch_amplio.joblib"
 if [ ! -f "$MODEL_PATH" ]; then
   echo "Model not found at $MODEL_PATH. Enabling DVC no-scm mode and pulling from remote using profile 'equipo56'..."
   # Ensure DVC operates without a Git repository
   dvc config core.no_scm true
-  # Ensure remote uses expected profile & region
+  # Ensure remote uses expected profile & region & explicit endpoint
   dvc remote modify team_remote profile equipo56 || true
   dvc remote modify team_remote region "${REGION}" || true
+  dvc remote modify team_remote endpointurl "${S3_ENDPOINT}" || true
   # Optional: set as default remote if not already
   dvc remote default team_remote || true
   # Show effective DVC config (safe: contains url/region/profile)
