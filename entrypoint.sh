@@ -37,16 +37,22 @@ export AWS_SDK_LOAD_CONFIG=1
 # Unset direct env credentials to ensure boto3 uses the profile
 unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN || true
 
-# 4) Pull DVC artifacts if missing (use --no-scm since /app is not a git repo)
+# 4) Pull DVC artifacts if missing (use global --no-scm since /app is not a git repo)
 MODEL_PATH="models/best_gridsearch_amplio.joblib"
 if [ ! -f "$MODEL_PATH" ]; then
-  echo "Model not found at $MODEL_PATH. Running 'dvc pull --no-scm' using profile 'equipo56'..."
+  echo "Model not found at $MODEL_PATH. Running 'dvc --no-scm pull' using profile 'equipo56'..."
   # Create parent dir just in case
   mkdir -p "$(dirname "$MODEL_PATH")"
-  if ! dvc pull --no-scm -v "$MODEL_PATH"; then
+  if ! dvc --no-scm pull -v "$MODEL_PATH"; then
     echo "WARNING: dvc pull failed. The application may fallback to MLflow if configured."
   fi
 fi
 
-# 5) Start the API server
+# 5) Default MLflow tracking to local file backend if not provided
+if [ -z "${MLFLOW_TRACKING_URI:-}" ]; then
+  export MLFLOW_TRACKING_URI="file:/app/mlruns"
+  echo "MLFLOW_TRACKING_URI not set. Defaulting to ${MLFLOW_TRACKING_URI}"
+fi
+
+# 6) Start the API server
 exec uvicorn app_api:app --host 0.0.0.0 --port 8000
