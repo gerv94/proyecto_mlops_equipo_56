@@ -48,17 +48,20 @@ export AWS_SDK_LOAD_CONFIG=1
 # Unset direct env credentials to ensure boto3 uses the profile
 unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN || true
 
-# Debug: show sanitized AWS config being used
-echo "AWS profile in use: ${AWS_PROFILE}"
-echo "AWS region: ${REGION}"
-if [ -f /root/.aws/credentials ]; then
-  echo ": ~/.aws/credentials"
-  # mask secret entirely, and mask access key id leaving first 4 chars
-  sed -E 's/(aws_secret_access_key=).*/\1********/; s/(aws_access_key_id=)([A-Z0-9]{4}).*/\1\2********/' /root/.aws/credentials || true
-fi
-if [ -f /root/.aws/config ]; then
-  echo ": ~/.aws/config"
-  cat /root/.aws/config || true
+# Optional debug: set DEBUG_AWS=1 to print AWS details and probe S3
+DEBUG_AWS="${DEBUG_AWS:-0}"
+if [ "$DEBUG_AWS" = "1" ]; then
+  echo "AWS profile in use: ${AWS_PROFILE}"
+  echo "AWS region: ${REGION}"
+  if [ -f /root/.aws/credentials ]; then
+    echo ": ~/.aws/credentials"
+    # mask secret entirely, and mask access key id leaving first 4 chars
+    sed -E 's/(aws_secret_access_key=).*/\1********/; s/(aws_access_key_id=)([A-Z0-9]{4}).*/\1\2********/' /root/.aws/credentials || true
+  fi
+  if [ -f /root/.aws/config ]; then
+    echo ": ~/.aws/config"
+    cat /root/.aws/config || true
+  fi
 fi
 
 # Derive S3 endpoint for the configured region (helps avoid region mismatch 400s)
@@ -69,7 +72,8 @@ else
 fi
 export S3_ENDPOINT
 
-# Debug: verify identity and bucket reachability via botocore
+# Debug-only STS/S3 checks
+if [ "$DEBUG_AWS" = "1" ]; then
 python3 - <<'PY'
 import os, json
 try:
@@ -84,8 +88,9 @@ try:
     s3.head_bucket(Bucket="itesm-mna")
     print("S3 head_bucket ok for 'itesm-mna'")
 except Exception as e:
-    print("Credential/S3 check failed:", repr(e))
+    print("[DEBUG] Credential/S3 check failed:", repr(e))
 PY
+fi
 
 # 4) Enable no-scm mode in repo config and pull DVC artifacts if missing
 MODEL_PATH="models/best_gridsearch_amplio.joblib"
