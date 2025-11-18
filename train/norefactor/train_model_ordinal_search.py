@@ -12,7 +12,7 @@ from typing import Optional, Tuple, Dict, List
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -20,11 +20,12 @@ from sklearn.metrics import (
     f1_score,
     confusion_matrix,
     classification_report,
-    mean_absolute_error,
 )
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
+import mlflow
+import mlflow.sklearn
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -44,7 +45,6 @@ CATEGORICAL_COLUMNS = [
     "Gender",
     "Caste",
     "coaching",
-    "time",
     "Class_ten_education",
     "twelve_education",
     "medium",
