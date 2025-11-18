@@ -30,6 +30,17 @@ mkdir -p /root/.aws
   echo "output=json"
 } > /root/.aws/config
 
+# Fail-fast or warn if credentials are missing
+if [ -z "${ACCESS_KEY}" ] || [ -z "${SECRET_KEY}" ]; then
+  echo "WARNING: Missing AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY. DVC pull will be skipped."
+  echo "Set these variables in Railway to enable S3 access via profile 'equipo56'."
+  # Start server without DVC and MLflow will default to file backend
+  if [ -z "${MLFLOW_TRACKING_URI:-}" ]; then
+    export MLFLOW_TRACKING_URI="file:/app/mlruns"
+  fi
+  exec uvicorn app_api:app --host 0.0.0.0 --port 8000
+fi
+
 # 3) Force SDKs to use the profile instead of direct env credentials
 export AWS_PROFILE=equipo56
 export AWS_DEFAULT_REGION="${REGION}"
