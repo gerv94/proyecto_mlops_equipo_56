@@ -43,6 +43,13 @@ MLFLOW_LOG ?= mlflow.log
 MLFLOW_TRACKING_URI ?= http://127.0.0.1:$(MLFLOW_PORT)
 export MLFLOW_TRACKING_URI
 
+# Cross-platform tee replacement for logging to file and console
+ifeq ($(OS),Windows_NT)
+  TEE_CMD := powershell -NoProfile -Command "Tee-Object -FilePath '$(MLFLOW_LOG)'"
+else
+  TEE_CMD := tee $(MLFLOW_LOG)
+endif
+
 # ###############################################################################
 # COMMANDS                                                                      #
 # ###############################################################################
@@ -56,7 +63,6 @@ help: ## Show this help message
 	@echo ""
 	-@$(PYTHON_SYSTEM) scripts$(SEP)print_make_help.py $(MAKEFILE_LIST)
 	@echo ""
-
 show_env: ## Show Python environment information
 	@echo "Python interpreter: $(PYTHON_INTERPRETER)"
 	@$(PYTHON_INTERPRETER) --version
@@ -157,13 +163,12 @@ mlflow: .ensure_venv ## Start MLflow tracking server (use MLFLOW_PORT to change 
 	@echo "Artefactos: $(MLFLOW_ARTIFACT_ROOT)"
 	@echo "Logs: $(MLFLOW_LOG)"
 	@echo "Presiona Ctrl+C para detener el servidor"
-	@$(MLFLOW) server \
+	$(MLFLOW) server \
 		--backend-store-uri $(MLFLOW_BACKEND_URI) \
 		--default-artifact-root $(MLFLOW_ARTIFACT_ROOT) \
 		--host $(MLFLOW_HOST) \
 		--port $(MLFLOW_PORT) \
-		2>&1 | tee $(MLFLOW_LOG)
-
+		2>&1 | $(TEE_CMD)
 predict: .ensure_venv ## Run model prediction over current preprocessed data
 	@echo "Running prediction..."
 	@$(PYTHON_INTERPRETER) predict.py
