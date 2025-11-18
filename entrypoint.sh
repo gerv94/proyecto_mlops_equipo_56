@@ -37,13 +37,15 @@ export AWS_SDK_LOAD_CONFIG=1
 # Unset direct env credentials to ensure boto3 uses the profile
 unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN || true
 
-# 4) Pull DVC artifacts if missing (use global --no-scm since /app is not a git repo)
+# 4) Enable no-scm mode in repo config and pull DVC artifacts if missing
 MODEL_PATH="models/best_gridsearch_amplio.joblib"
 if [ ! -f "$MODEL_PATH" ]; then
-  echo "Model not found at $MODEL_PATH. Running 'dvc --no-scm pull' using profile 'equipo56'..."
+  echo "Model not found at $MODEL_PATH. Enabling DVC no-scm mode and pulling from remote using profile 'equipo56'..."
+  # Ensure DVC operates without a Git repository
+  dvc config core.no_scm true
   # Create parent dir just in case
   mkdir -p "$(dirname "$MODEL_PATH")"
-  if ! dvc --no-scm pull -v "$MODEL_PATH"; then
+  if ! dvc pull -v "$MODEL_PATH"; then
     echo "WARNING: dvc pull failed. The application may fallback to MLflow if configured."
   fi
 fi
